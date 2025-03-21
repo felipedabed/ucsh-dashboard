@@ -1,72 +1,68 @@
+import streamlit as st
 import pandas as pd
 import numpy as np
-import streamlit as st
-import matplotlib.pyplot as plt
 
-# -------------------------
-# Cargar los datos
-# -------------------------
 @st.cache_data
 def load_data():
     df = pd.read_csv("data/Resultados_ROL.csv", delimiter=",")
-    df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors="coerce")
-    df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"].replace("-", np.nan), errors="coerce")
+    df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors='coerce')
+    df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"], errors='coerce')
     return df
 
 df = load_data()
 
-st.set_page_config(layout="wide")
-st.title("🔍 Dashboard Evaluación de Desempeño – UCSH")
+st.title("Dashboard Evaluación UCSH")
 
-# -------------------------
 # Filtros
-# -------------------------
-st.sidebar.header("🎯 Filtros")
-
-col1 = st.sidebar.multiselect("RUT Colaborador", df["RUT Colaborador"].unique())
-col2 = st.sidebar.multiselect("Nombre Colaborador", df["Nombre Colaborador"].unique())
-col3 = st.sidebar.multiselect("Cargo", df["Cargo"].unique())
-col4 = st.sidebar.multiselect("Gerencia", df["Gerencia"].unique())
-col5 = st.sidebar.multiselect("Sucursal", df["Sucursal"].unique())
-col6 = st.sidebar.multiselect("Centro de Costo", df["Centro de Costo"].unique())
+with st.sidebar:
+    rut = st.selectbox("RUT Colaborador", options=["Todos"] + sorted(df["RUT Colaborador"].dropna().unique().tolist()))
+    sucursal = st.selectbox("Sucursal", options=["Todos"] + sorted(df["Sucursal"].dropna().unique().tolist()))
+    gerencia = st.selectbox("Gerencia", options=["Todos"] + sorted(df["Gerencia"].dropna().unique().tolist()))
 
 filtered_df = df.copy()
-if col1: filtered_df = filtered_df[filtered_df["RUT Colaborador"].isin(col1)]
-if col2: filtered_df = filtered_df[filtered_df["Nombre Colaborador"].isin(col2)]
-if col3: filtered_df = filtered_df[filtered_df["Cargo"].isin(col3)]
-if col4: filtered_df = filtered_df[filtered_df["Gerencia"].isin(col4)]
-if col5: filtered_df = filtered_df[filtered_df["Sucursal"].isin(col5)]
-if col6: filtered_df = filtered_df[filtered_df["Centro de Costo"].isin(col6)]
+if rut != "Todos":
+    filtered_df = filtered_df[filtered_df["RUT Colaborador"] == rut]
+if sucursal != "Todos":
+    filtered_df = filtered_df[filtered_df["Sucursal"] == sucursal]
+if gerencia != "Todos":
+    filtered_df = filtered_df[filtered_df["Gerencia"] == gerencia]
 
-# -------------------------
-# Mostrar datos filtrados
-# -------------------------
-if not filtered_df.empty:
-    for (rut, nombre), df_persona in filtered_df.groupby(["RUT Colaborador", "Nombre Colaborador"]):
-        st.subheader(f"👤 {nombre} – {rut}")
-        
-        df_persona = df_persona[["Rol Evaluador", "Nota Final Evaluación", "Ponderación Rol Evaluación"]].dropna()
+# Consolidado por Rol Evaluador
+st.subheader("Resumen por Rol Evaluador")
 
-        # Gráfico
-        fig, ax = plt.subplots()
-        evaluadores = df_persona["Rol Evaluador"]
-        puntajes = df_persona["Nota Final Evaluación"]
-        porcentajes = puntajes / 4 * 100
-        ax.bar(evaluadores, porcentajes, color="skyblue")
-        ax.set_ylabel("% de logro (1 = 0%, 4 = 100%)")
-        ax.set_ylim(0, 100)
-        ax.set_title("Score por Dimensión")
-        st.pyplot(fig)
+roles = ["Autoevaluacion", "Indirecto", "Jefatura"]
+resumen = {}
+for rol in roles:
+    notas = filtered_df[filtered_df["Rol Evaluador"] == rol]["Nota Final Evaluación"]
+    if not notas.empty:
+        promedio = notas.mean()
+        porcentaje = (promedio - 1) / 3 * 100  # escala 1 a 4 => 0% a 100%
+        resumen[rol] = porcentaje
+    else:
+        resumen[rol] = None
 
-        # Cálculo Score Global
-        df_persona["Peso"] = df_persona["Ponderación Rol Evaluación"] / 100
-        df_persona["Peso Normalizado"] = df_persona["Peso"] / df_persona["Peso"].sum()
-        df_persona["Score Ponderado"] = df_persona["Nota Final Evaluación"] * df_persona["Peso Normalizado"]
-        score_global = df_persona["Score Ponderado"].sum()
-        st.metric("🎯 Score Global Ponderado", f"{score_global:.2f} (de 4)")
+# Mostrar gráfico de barras nativo
+st.bar_chart(pd.Series({k: v for k, v in resumen.items() if v is not None}))
 
-        # Tabla resumen
-        st.dataframe(df_persona[["Rol Evaluador", "Nota Final Evaluación", "Ponderación Rol Evaluación", "Score Ponderado"]])
-
-else:
-    st.warning("⚠️ No se encontraron resultados con los filtros seleccionados.")
+# Mostrar tablas por Rol Evaluador
+st.subheader("Detalle por Atributo")
+for rol in roles:
+    subset = filtered_df[filtered_df["Rol Evaluador"] == rol]
+    if not subset.empty:
+        cols = [col for col in subset.columns if "Nota" in col or "Ponderación" in col]
+        tabla = subset[cols].copy()
+        for col in tabla.columns:
+            if "Nota" in col:
+                tabla[col] = pd.to_numeric(tabla[col].replace("-", np.nan), errors="coerce")
+        ponderadas = []
+        for i in range(0, len(cols), 2):
+            try:
+                nota = tabla.iloc[:, i]
+                ponderacion = tabla.iloc[:, i+1] / 100
+                ponderadas.append(nota * ponderacion)
+            except:
+                continue
+        if ponderadas:
+            tabla["Nota Ponderada Total"] = sum(ponderadas)
+        st.markdown(f"**{rol}**")
+        st.dataframe(tabla)
