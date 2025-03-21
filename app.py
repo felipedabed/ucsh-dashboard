@@ -6,7 +6,7 @@ import os
 # Cargar datos
 @st.cache_data
 def load_data():
-    df = pd.read_csv("data/Resultados_ROL (En)(Resultados por Rol).csv", delimiter=";", encoding="latin1")
+    df = pd.read_csv("data/Resultados_ROL.csv", delimiter=";", encoding="latin1")
     df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors='coerce')
     df["% Evaluación"] = df["Nota Final Evaluación"] / 4 * 100
     return df
