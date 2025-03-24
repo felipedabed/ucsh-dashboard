@@ -1,4 +1,30 @@
-import streamlit as st 
+import streamlit as st
+
+# CSS personalizado para tablas más compactas y completas
+st.markdown("""
+<style>
+    /* Reduce márgenes y padding de tabla en general */
+    .stDataFrame {
+        font-size: 12px;
+    }
+
+    /* Ajusta encabezados y celdas de tabla */
+    .stDataFrame th, .stDataFrame td {
+        padding: 3px !important;
+        white-space: nowrap; /* Evita que el texto se corte en varias líneas */
+        max-width: none; /* evita restricciones de ancho máximo */
+    }
+
+    /* Tabla ocupa ancho completo disponible */
+    section.main > div {
+        max-width: 100%;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
 import pandas as pd
 import numpy as np
 
