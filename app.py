@@ -43,34 +43,16 @@ if filtered_df.empty:
 # Pivot con notas por rol
 pivot = filtered_df.pivot_table(index="RUT Colaborador", columns="Rol Evaluador", values="Nota Final Evaluación", aggfunc="mean")
 
-# Ponderaciones generales promedio por dimensión
-ponderaciones = filtered_df.groupby("Rol Evaluador")["Ponderación Rol Evaluación"].mean()
+# Asegurar siempre las columnas necesarias existan aunque no tengan datos
+pivot = pivot.reindex(columns=["Autoevaluacion", "Indirecto", "Jefatura"])
 
-# Función que calcula score individual redistribuyendo ponderaciones
-def calcular_score(row):
-    roles = ["Autoevaluacion", "Indirecto", "Jefatura"]
-    notas_validas = {rol: row.get(rol) for rol in roles if not pd.isna(row.get(rol))}
-    
-    ponderaciones_validas = {rol: ponderaciones[rol] for rol in notas_validas}
-    suma_ponderaciones = sum(ponderaciones_validas.values())
-    
-    if suma_ponderaciones == 0:
-        return np.nan
-
-    # Redistribuir ponderaciones proporcionalmente
-    score = sum(
-        notas_validas[rol] * (ponderaciones_validas[rol] / suma_ponderaciones)
-        for rol in notas_validas
-    )
-    return score
-
-# Tabla información colaborador
+# Tabla información colaborador (corrección implementada aquí)
 st.subheader("Información del colaborador")
 informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
 
-informacion["Nota Autoevaluación"] = informacion["RUT Colaborador"].map(pivot.get("Autoevaluacion"))
-informacion["Nota Indirecto"] = informacion["RUT Colaborador"].map(pivot.get("Indirecto"))
-informacion["Nota Jefatura"] = informacion["RUT Colaborador"].map(pivot.get("Jefatura"))
+informacion["Nota Autoevaluación"] = informacion["RUT Colaborador"].map(pivot["Autoevaluacion"])
+informacion["Nota Indirecto"] = informacion["RUT Colaborador"].map(pivot["Indirecto"])
+informacion["Nota Jefatura"] = informacion["RUT Colaborador"].map(pivot["Jefatura"])
 
 # Aplicar nuevo cálculo ajustado
 informacion["Score Global"] = informacion.apply(lambda row: calcular_score({
@@ -80,21 +62,11 @@ informacion["Score Global"] = informacion.apply(lambda row: calcular_score({
 }), axis=1)
 
 # Categoría desempeño
-def categoria_desempeno(score):
-    if pd.isna(score):
-        return "Sin evaluación"
-    if score >= 3.6:
-        return "Desempeño destacado"
-    elif score >= 2.8:
-        return "Desempeño competente"
-    elif score >= 2.2:
-        return "Desempeño básico"
-    else:
-        return "Desempeño insuficiente"
-
 informacion["Categoría desempeño"] = informacion["Score Global"].apply(categoria_desempeno)
 
 st.dataframe(informacion)
+
+
 
 # Gráfico Promedio Puntaje por Dimensión
 st.subheader("Puntaje Promedio por Dimensión (Escala 1-4)")
