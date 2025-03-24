@@ -101,7 +101,7 @@ resumen = pd.DataFrame({
 
 # Total ponderado promedio
 score_global_promedio = informacion["Score Global"].mean()
-resumen.loc[len(resumen)] = ["Total ponderado promedio", score_global_promedio, f"{((score_global_promedio-1)/3)*100:.0f}%"]
+resumen.loc[len(resumen)] = ["Score global", score_global_promedio, f"{((score_global_promedio-1)/3)*100:.0f}%"]
 st.dataframe(resumen)
 
 # Tabla fija informativa (estaba correcta)
