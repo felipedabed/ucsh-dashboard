@@ -40,40 +40,46 @@ if filtered_df.empty:
     st.warning("No se encontraron datos para los filtros seleccionados.")
     st.stop()
 
-# Score por Rol Evaluador
+# Pivot con notas por rol
 pivot = filtered_df.pivot_table(index="RUT Colaborador", columns="Rol Evaluador", values="Nota Final Evaluación", aggfunc="mean")
 
-# Calcular ponderaciones globales
+# Ponderaciones generales promedio por dimensión
 ponderaciones = filtered_df.groupby("Rol Evaluador")["Ponderación Rol Evaluación"].mean()
 
-# Función para calcular score individual
+# Función que calcula score individual redistribuyendo ponderaciones
 def calcular_score(row):
-    score = 0
-    suma_ponderacion = 0
-    for rol in ["Autoevaluacion", "Indirecto", "Jefatura"]:
-        nota = row.get(rol)
-        peso = ponderaciones.get(rol, np.nan)
-        if not pd.isna(nota) and not pd.isna(peso):
-            score += nota * (peso / 100)
-            suma_ponderacion += peso
-    return score if suma_ponderacion else np.nan
+    roles = ["Autoevaluacion", "Indirecto", "Jefatura"]
+    notas_validas = {rol: row.get(rol) for rol in roles if not pd.isna(row.get(rol))}
+    
+    ponderaciones_validas = {rol: ponderaciones[rol] for rol in notas_validas}
+    suma_ponderaciones = sum(ponderaciones_validas.values())
+    
+    if suma_ponderaciones == 0:
+        return np.nan
 
-# Información del colaborador con score individualizado
+    # Redistribuir ponderaciones proporcionalmente
+    score = sum(
+        notas_validas[rol] * (ponderaciones_validas[rol] / suma_ponderaciones)
+        for rol in notas_validas
+    )
+    return score
+
+# Tabla información colaborador
 st.subheader("Información del colaborador")
 informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
 
-# Manejo de casos que faltan (corrección aquí)
-informacion["Nota Autoevaluación"] = informacion["RUT Colaborador"].map(pivot["Autoevaluacion"]) if "Autoevaluacion" in pivot else np.nan
-informacion["Nota Indirecto"] = informacion["RUT Colaborador"].map(pivot["Indirecto"]) if "Indirecto" in pivot else np.nan
-informacion["Nota Jefatura"] = informacion["RUT Colaborador"].map(pivot["Jefatura"]) if "Jefatura" in pivot else np.nan
+informacion["Nota Autoevaluación"] = informacion["RUT Colaborador"].map(pivot.get("Autoevaluacion"))
+informacion["Nota Indirecto"] = informacion["RUT Colaborador"].map(pivot.get("Indirecto"))
+informacion["Nota Jefatura"] = informacion["RUT Colaborador"].map(pivot.get("Jefatura"))
 
+# Aplicar nuevo cálculo ajustado
 informacion["Score Global"] = informacion.apply(lambda row: calcular_score({
     "Autoevaluacion": row["Nota Autoevaluación"],
     "Indirecto": row["Nota Indirecto"],
     "Jefatura": row["Nota Jefatura"]
 }), axis=1)
 
-# Categoría desempeño individual
+# Categoría desempeño
 def categoria_desempeno(score):
     if pd.isna(score):
         return "Sin evaluación"
@@ -90,13 +96,13 @@ informacion["Categoría desempeño"] = informacion["Score Global"].apply(categor
 
 st.dataframe(informacion)
 
-# Gráfico de barras - Promedio Puntaje por Dimensión (corregido)
-st.subheader("Puntaje por Dimensión (Escala 1-4)")
+# Gráfico Promedio Puntaje por Dimensión
+st.subheader("Puntaje Promedio por Dimensión (Escala 1-4)")
 dimensiones_promedio = pivot.mean().dropna()
 st.bar_chart(dimensiones_promedio)
 
-# Tabla resumen con promedios correctos
-st.subheader("Resumen de Notas por Dimensión")
+# Tabla resumen dimensiones promedio
+st.subheader("Resumen Promedio por Dimensión")
 resumen = pd.DataFrame({
     "Dimensión": dimensiones_promedio.index,
     "Nota Promedio": dimensiones_promedio.values,
@@ -108,7 +114,7 @@ score_global_promedio = informacion["Score Global"].mean()
 resumen.loc[len(resumen)] = ["Total ponderado promedio", score_global_promedio, f"{((score_global_promedio-1)/3)*100:.0f}%"]
 st.dataframe(resumen)
 
-# Tabla fija informativa (estaba correcta)
+# Ponderaciones fijas informativas
 st.subheader("Ponderación por Dimensión")
 info_ponderacion = pd.DataFrame({
     "Dimensión": ["Autoevaluación", "Indirecto", "Jefatura"],
@@ -116,7 +122,7 @@ info_ponderacion = pd.DataFrame({
 })
 st.dataframe(info_ponderacion)
 
-# Evaluación por dimensión y atributos (sin cambios, funcionando bien)
+# Evaluación dimensión y atributos
 st.subheader("Evaluación por dimensión y atributos")
 roles = filtered_df["Rol Evaluador"].unique()
 for rol in roles:
