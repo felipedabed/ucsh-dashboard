@@ -51,11 +51,11 @@ def calcular_score(row):
     score, peso_total = 0, 0
     for rol in ["Autoevaluacion", "Indirecto", "Jefatura"]:
         nota = row.get(rol)
-        peso = ponderaciones.get(rol, np.nan)
+        peso = ponderaciones.get(rol)
         if not pd.isna(nota) and not pd.isna(peso):
-            score += nota * peso
+            score += nota * (peso / 100)
             peso_total += peso
-    return (score / peso_total) if peso_total else np.nan
+    return score if peso_total > 0 else np.nan
 
 # Información del colaborador (ahora con Score individual corregido)
 informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
@@ -84,7 +84,7 @@ informacion["Categoría desempeño"] = informacion["Score Global"].apply(categor
 st.subheader("Información del colaborador")
 st.dataframe(informacion)
 
-# Puntaje promedio general por Dimensión (gráfico corregido)
+# Puntaje promedio general por Dimensión
 st.subheader("Puntaje por Dimensión (Escala 1-4)")
 dimensiones_promedio = pivot.mean().dropna()
 st.bar_chart(dimensiones_promedio)
@@ -97,7 +97,9 @@ for i, (dimension, puntaje) in enumerate(dimensiones_promedio.items()):
 
 # Sección destacada Score Global promedio general corregido
 st.subheader("Score Global Promedio")
-score_global_promedio = informacion["Score Global"].mean().round(3)
+
+# Corrección importante aquí (omitimos NaNs explícitamente)
+score_global_promedio = informacion["Score Global"].dropna().mean().round(3)
 categoria_promedio = categoria(score_global_promedio)
 
 col1, col2 = st.columns([1, 2])
@@ -108,7 +110,7 @@ with col1:
 with col2:
     st.markdown(f"### Categoría: {categoria_promedio}")
 
-# Tabla resumen notas promedio por dimensión (corregido)
+# Tabla resumen notas promedio por dimensión
 st.subheader("Resumen de Notas por Dimensión")
 resumen = pd.DataFrame({
     "Dimensión": dimensiones_promedio.index,
@@ -126,7 +128,7 @@ info_ponderacion = pd.DataFrame({
 })
 st.dataframe(info_ponderacion)
 
-# Evaluación por dimensión y atributos (sección funcional)
+# Evaluación por dimensión y atributos
 st.subheader("Evaluación por dimensión y atributos")
 for rol in filtered_df["Rol Evaluador"].unique():
     sub_df = filtered_df[filtered_df["Rol Evaluador"] == rol].copy()
