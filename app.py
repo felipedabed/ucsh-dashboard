@@ -2,24 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-# Aplica el CSS personalizado primero
-st.markdown("""
-<style>
-    .stDataFrame {
-        font-size: 7px;
-    }
-    .stDataFrame th, .stDataFrame td {
-        padding: 3px !important;
-        white-space: nowrap;
-        max-width: none;
-    }
-    section.main > div {
-        max-width: 100%;
-        padding-left: 2rem;
-        padding-right: 2rem;
-    }
-</style>
-""", unsafe_allow_html=True)
 
 # El resto de tu código sigue exactamente igual desde aquí
 
@@ -109,7 +91,7 @@ def categoria_desempeno(score):
         return "Desempeño insuficiente"
 
 informacion["Categoría desempeño"] = informacion["Score Global"].apply(categoria_desempeno)
-st.dataframe(informacion)
+st.dataframe(informacion, height=(len(informacion)+1)*35)
 
 # Puntaje promedio por dimensión
 st.subheader("Puntaje por Dimensión (Escala 1-4)")
