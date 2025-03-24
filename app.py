@@ -186,43 +186,45 @@ for dimension, columnas_nota in atributos_por_dimension.items():
         st.markdown(f"### {dimension}")
         st.info("No se encontraron atributos evaluados para esta dimensión.")
 
+### DE AQUI PA ABAJO TIRAR ERRORES
 
-
-# Descarga PDF (Placeholder)
+from fpdf import FPDF
+import streamlit as st
+import pandas as pd
 from io import BytesIO
-from weasyprint import HTML
 
-# Función para generar PDF con WeasyPrint
-def generar_pdf(html_content):
+def generar_pdf(informacion, resumen):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, txt="Informe Evaluación Colaborador", ln=True, align='C')
+
+    # Información General
+    pdf.cell(200, 10, txt="Información General", ln=True, align='L')
+    for col in informacion.columns:
+        pdf.cell(200, 10, txt=f"{col}: {informacion.iloc[0][col]}", ln=True)
+
+    pdf.cell(200, 10, txt=" ", ln=True)
+
+    # Notas por Dimensión
+    pdf.cell(200, 10, txt="Notas por Dimensión", ln=True, align='L')
+    for idx, row in resumen.iterrows():
+        pdf.cell(200, 10, txt=f"{row['Dimensión']}: {row['Nota Promedio']:.2f}", ln=True)
+
     pdf_file = BytesIO()
-    HTML(string=html_content).write_pdf(pdf_file)
+    pdf.output(pdf_file)
     pdf_file.seek(0)
+
     return pdf_file
 
-# Contenido HTML básico del PDF
-def crear_contenido_pdf(informacion, notas_por_dimension):
-    html = "<h1>Informe Evaluación Colaborador</h1>"
-    html += "<h2>Información General</h2>"
-    html += informacion.to_html(index=False)
-    
-    html += "<h2>Notas por Dimensión</h2>"
-    html += notas_por_dimension.to_html(index=False)
-    
-    return html
-
-# Botón para descargar PDF del colaborador seleccionado
 st.subheader("Exportar a PDF")
 
 if st.button("Descargar PDF del colaborador seleccionado"):
-    # Generar contenido HTML
-    html_content = crear_contenido_pdf(informacion, resumen)
-    
-    # Generar PDF
-    pdf_file = generar_pdf(html_content)
-    
-    # Descargar PDF en Streamlit
+    pdf_file = generar_pdf(informacion, resumen)
+
     st.download_button(
-        label="Haz clic aquí para descargar el PDF",
+        label="Descargar PDF",
         data=pdf_file,
         file_name=f"{informacion.iloc[0]['RUT Colaborador']}.pdf",
         mime="application/pdf"
