@@ -69,12 +69,17 @@ else:
 
 st.subheader("Información del colaborador")
 informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
-informacion["Puntaje Autoevaluación"] = pivot["Autoevaluacion"] if "Autoevaluacion" in pivot else np.nan
-informacion["Puntaje Indirecto"] = pivot["Indirecto"] if "Indirecto" in pivot else np.nan
-informacion["Puntaje Jefatura"] = pivot["Jefatura"] if "Jefatura" in pivot else np.nan
+
+# Remover columnas anteriores y agregar columnas actualizadas correctamente
+informacion["Nota Autoevaluación"] = pivot.get("Autoevaluacion").values if "Autoevaluacion" in pivot else np.nan
+informacion["Nota Indirecto"] = pivot.get("Indirecto").values if "Indirecto" in pivot else np.nan
+informacion["Nota Jefatura"] = pivot.get("Jefatura").values if "Jefatura" in pivot else np.nan
 informacion["Score Global"] = score_global
 informacion["Categoría desempeño"] = categoria
+
 st.dataframe(informacion)
+
+
 
 # Gráfico de barras - Puntaje por Dimensión (ahora con gráfico nativo)
 st.subheader("Puntaje por Dimensión (Escala 1-4)")
