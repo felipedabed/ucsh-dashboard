@@ -1,8 +1,7 @@
 import streamlit as st 
 import pandas as pd
 import numpy as np
-from io import BytesIO
-from weasyprint import HTML
+
 
 # Cargar datos
 @st.cache_data
@@ -190,6 +189,9 @@ for dimension, columnas_nota in atributos_por_dimension.items():
 
 
 # Descarga PDF (Placeholder)
+from io import BytesIO
+from weasyprint import HTML
+
 # Función para generar PDF con WeasyPrint
 def generar_pdf(html_content):
     pdf_file = BytesIO()
