@@ -1,6 +1,8 @@
 import streamlit as st 
 import pandas as pd
 import numpy as np
+from io import BytesIO
+from weasyprint import HTML
 
 # Cargar datos
 @st.cache_data
@@ -188,81 +190,38 @@ for dimension, columnas_nota in atributos_por_dimension.items():
 
 
 # Descarga PDF (Placeholder)
+# Función para generar PDF con WeasyPrint
+def generar_pdf(html_content):
+    pdf_file = BytesIO()
+    HTML(string=html_content).write_pdf(pdf_file)
+    pdf_file.seek(0)
+    return pdf_file
 
-from reportlab.pdfgen import canvas
+# Contenido HTML básico del PDF
+def crear_contenido_pdf(informacion, notas_por_dimension):
+    html = "<h1>Informe Evaluación Colaborador</h1>"
+    html += "<h2>Información General</h2>"
+    html += informacion.to_html(index=False)
+    
+    html += "<h2>Notas por Dimensión</h2>"
+    html += notas_por_dimension.to_html(index=False)
+    
+    return html
 
-def generar_pdf():
-    c = canvas.Canvas("archivo.pdf")
-    c.drawString(100,750,"Hola desde ReportLab!")
-    c.save()
-
-import io
-from fpdf import FPDF
-import zipfile
-
-def crear_pdf(rut, info_df, dimensiones_df):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
-    # Título
-    pdf.cell(200, 10, f"Evaluación UCSH - RUT {rut}", ln=True, align='C')
-
-    # Información del colaborador
-    pdf.cell(200, 10, "Información del Colaborador:", ln=True)
-    for col in info_df.columns:
-        pdf.cell(200, 10, f"{col}: {info_df.iloc[0][col]}", ln=True)
-
-    pdf.ln(10)
-
-    # Puntajes por dimensión
-    pdf.cell(200, 10, "Puntajes por Dimensión:", ln=True)
-    for idx, row in dimensiones_df.iterrows():
-        pdf.cell(200, 10, f"{row['Dimensión']}: {row['Nota Promedio']:.2f}", ln=True)
-
-    return pdf.output(dest='S').encode('latin1')
-
-def crear_zip_pdfs(df_filtrado, informacion):
-    zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w') as zf:
-        for rut in informacion["RUT Colaborador"].unique():
-            info_colab = informacion[informacion["RUT Colaborador"] == rut]
-            pivot_colab = df_filtrado[df_filtrado["RUT Colaborador"] == rut].pivot_table(index="RUT Colaborador", columns="Rol Evaluador", values="Nota Final Evaluación", aggfunc="mean")
-            
-            dimensiones_colab = pivot_colab.mean().reset_index().rename(columns={0: "Nota Promedio", "Rol Evaluador": "Dimensión"})
-            pdf_bytes = crear_pdf(rut, info_colab, dimensiones_colab)
-
-            zf.writestr(f"{rut}.pdf", pdf_bytes)
-    return zip_buffer.getvalue()
-
-# Botones en Streamlit
+# Botón para descargar PDF del colaborador seleccionado
 st.subheader("Exportar a PDF")
 
-# PDF Individual
 if st.button("Descargar PDF del colaborador seleccionado"):
-    if len(informacion) == 1:
-        rut_seleccionado = informacion.iloc[0]["RUT Colaborador"]
-        pivot_colab = filtered_df.pivot_table(index="RUT Colaborador", columns="Rol Evaluador", values="Nota Final Evaluación", aggfunc="mean")
-        dimensiones_colab = pivot_colab.mean().reset_index().rename(columns={0: "Nota Promedio", "Rol Evaluador": "Dimensión"})
-
-        pdf_bytes = crear_pdf(rut_seleccionado, informacion, dimensiones_colab)
-        
-        st.download_button(
-            label="Descargar PDF",
-            data=pdf_bytes,
-            file_name=f"{rut_seleccionado}.pdf",
-            mime="application/pdf"
-        )
-    else:
-        st.warning("Por favor, selecciona exactamente un colaborador para descargar su PDF individual.")
-
-# PDF Bulk
-if st.button("Descargar PDFs de TODOS los colaboradores (ZIP)"):
-    zip_bytes = crear_zip_pdfs(filtered_df, informacion)
-
+    # Generar contenido HTML
+    html_content = crear_contenido_pdf(informacion, resumen)
+    
+    # Generar PDF
+    pdf_file = generar_pdf(html_content)
+    
+    # Descargar PDF en Streamlit
     st.download_button(
-        label="Descargar ZIP con PDFs",
-        data=zip_bytes,
-        file_name="Evaluaciones_Colaboradores.zip",
-        mime="application/zip"
+        label="Haz clic aquí para descargar el PDF",
+        data=pdf_file,
+        file_name=f"{informacion.iloc[0]['RUT Colaborador']}.pdf",
+        mime="application/pdf"
     )
