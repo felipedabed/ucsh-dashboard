@@ -1,103 +1,126 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from io import BytesIO
+import base64
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Cargar datos
 @st.cache_data
+
 def load_data():
     df = pd.read_csv("data/Resultados_ROL.csv", delimiter=",", encoding="ISO-8859-1")
-    df = df.replace("-", np.nan)
-    df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"], errors="coerce")
-    df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"], errors="coerce")
+    df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors='coerce')
+    df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"].replace("-", np.nan), errors='coerce')
     return df
 
 df = load_data()
 
-st.title("🔍 Dashboard Evaluaciones UCSH")
+st.title("Panel de Evaluación UCSH")
 
-# --- Filtros dinámicos ---
-st.sidebar.header("Filtrar colaborador")
-rut = st.sidebar.selectbox("RUT Colaborador", options=["Todos"] + sorted(df["RUT Colaborador"].dropna().unique().tolist()))
-nombre = st.sidebar.selectbox("Nombre Colaborador", options=["Todos"] + sorted(df["Nombre Colaborador"].dropna().unique().tolist()))
-sucursal = st.sidebar.selectbox("Sucursal", options=["Todos"] + sorted(df["Sucursal"].dropna().unique().tolist()))
+# Filtros
+with st.sidebar:
+    st.header("Filtros")
+    rut_filter = st.selectbox("RUT Colaborador", options=["Todos"] + sorted(df["RUT Colaborador"].dropna().unique().tolist()))
+    nombre_filter = st.selectbox("Nombre Colaborador", options=["Todos"] + sorted(df["Nombre Colaborador"].dropna().unique().tolist()))
+    gerencia_filter = st.selectbox("Gerencia", options=["Todos"] + sorted(df["Gerencia"].dropna().unique().tolist()))
+    centro_filter = st.selectbox("Centro de Costo", options=["Todos"] + sorted(df["Centro de Costo"].dropna().unique().tolist()))
+    sucursal_filter = st.selectbox("Sucursal", options=["Todos"] + sorted(df["Sucursal"].dropna().unique().tolist()))
 
+# Aplicar filtros
 filtered_df = df.copy()
+if rut_filter != "Todos":
+    filtered_df = filtered_df[filtered_df["RUT Colaborador"] == rut_filter]
+if nombre_filter != "Todos":
+    filtered_df = filtered_df[filtered_df["Nombre Colaborador"] == nombre_filter]
+if gerencia_filter != "Todos":
+    filtered_df = filtered_df[filtered_df["Gerencia"] == gerencia_filter]
+if centro_filter != "Todos":
+    filtered_df = filtered_df[filtered_df["Centro de Costo"] == centro_filter]
+if sucursal_filter != "Todos":
+    filtered_df = filtered_df[filtered_df["Sucursal"] == sucursal_filter]
 
-if rut != "Todos":
-    filtered_df = filtered_df[filtered_df["RUT Colaborador"] == rut]
-if nombre != "Todos":
-    filtered_df = filtered_df[filtered_df["Nombre Colaborador"] == nombre]
-if sucursal != "Todos":
-    filtered_df = filtered_df[filtered_df["Sucursal"] == sucursal]
-
-# --- Mostrar Info Colaborador ---
 if filtered_df.empty:
-    st.warning("No se encontraron datos con los filtros seleccionados.")
+    st.warning("No se encontraron datos para los filtros seleccionados.")
+    st.stop()
+
+# Score por Rol Evaluador
+pivot = filtered_df.pivot_table(index="RUT Colaborador", columns="Rol Evaluador", values="Nota Final Evaluación", aggfunc="mean")
+
+# Calcular Score Global
+ponderaciones = filtered_df.groupby("Rol Evaluador")["Ponderación Rol Evaluación"].mean()
+score_global = 0
+suma_ponderaciones = 0
+for rol in ["Autoevaluacion", "Indirecto", "Jefatura"]:
+    nota = pivot.get(rol, np.nan).mean()
+    peso = ponderaciones.get(rol, np.nan)
+    if not pd.isna(nota) and not pd.isna(peso):
+        score_global += nota * (peso / 100)
+        suma_ponderaciones += peso
+
+# Categoría de desempeño
+categoria = ""
+if score_global >= 3.6:
+    categoria = "Desempeño destacado"
+elif score_global >= 2.8:
+    categoria = "Desempeño competente"
+elif score_global >= 2.2:
+    categoria = "Desempeño básico"
 else:
-    colaborador_info = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
-    st.subheader("📄 Información del colaborador")
-    st.dataframe(colaborador_info)
+    categoria = "Desempeño insuficiente"
 
-    st.subheader("📊 Scores por Rol Evaluador")
-    roles = ["Autoevaluacion", "Indirecto", "Jefatura"]
+st.subheader("Información del colaborador")
+informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
+informacion["Puntaje Autoevaluación"] = pivot.get("Autoevaluacion")
+informacion["Puntaje Indirecto"] = pivot.get("Indirecto")
+informacion["Puntaje Jefatura"] = pivot.get("Jefatura")
+informacion["Score Global"] = score_global
+st.dataframe(informacion)
 
-    scores = {}
-    for rol in roles:
-        df_rol = filtered_df[filtered_df["Rol Evaluador"] == rol]
-        if not df_rol.empty:
-            nota = df_rol["Nota Final Evaluación"].values[0]
-            if not np.isnan(nota):
-                scores[rol] = nota
-            else:
-                scores[rol] = None
-        else:
-            scores[rol] = None
+# Gráfico de barras - Puntaje por Dimensión
+st.subheader("Puntaje por Dimensión (Escala 1-4)")
+notas = pivot.loc[pivot.index[0]].dropna() if not pivot.empty else pd.Series()
+fig, ax = plt.subplots()
+notas.plot(kind="bar", ax=ax, ylim=(1,4), color='skyblue')
+for i, v in enumerate(notas):
+    ax.text(i, v + 0.05, f"{v:.2f}", ha='center', va='bottom')
+plt.ylabel("Nota")
+st.pyplot(fig)
 
-    # --- Mostrar gráfico de barras ---
-    st.write("### Puntaje por dimensión")
-    score_chart_data = pd.DataFrame({
-        "Rol Evaluador": roles,
-        "Score (1-4)": [scores[r] if scores[r] is not None else np.nan for r in roles],
-        "Porcentaje (%)": [((scores[r]-1)/3)*100 if scores[r] is not None else np.nan for r in roles]
-    })
+# Tabla resumen
+st.subheader("Resumen de Notas por Dimensión")
+resumen = pd.DataFrame({
+    "Dimensión": notas.index,
+    "Nota Obtenida": notas.values,
+    "Nota Obtenida %": [f"{((x-1)/3)*100:.0f}%" for x in notas.values]
+})
+resumen.loc[len(resumen.index)] = ["Total ponderado", score_global, f"{((score_global-1)/3)*100:.0f}%"]
+st.dataframe(resumen)
 
-    st.bar_chart(score_chart_data.set_index("Rol Evaluador")["Porcentaje (%)"])
+# Tabla fija informativa
+st.subheader("Ponderación por Dimensión")
+info_ponderacion = pd.DataFrame({
+    "Dimensión": ["Autoevaluación", "Indirecto", "Jefatura"],
+    "% Ponderación": [f"{ponderaciones.get(r, np.nan):.0f}%" if not pd.isna(ponderaciones.get(r)) else "-" for r in ["Autoevaluacion", "Indirecto", "Jefatura"]]
+})
+st.dataframe(info_ponderacion)
 
-    # --- Mostrar Score Global ponderado ---
-    ponderaciones = {"Autoevaluacion": 0.2, "Indirecto": 0.35, "Jefatura": 0.45}
-    ponderaciones_validas = {k: v for k, v in ponderaciones.items() if scores[k] is not None}
-    total_ponderacion = sum(ponderaciones_validas.values())
+# Evaluación por dimensión y atributos
+st.subheader("Evaluación por dimensión y atributos")
+roles = filtered_df["Rol Evaluador"].unique()
+for rol in roles:
+    sub_df = filtered_df[filtered_df["Rol Evaluador"] == rol].copy()
+    if not sub_df.empty:
+        sub_df["Nota"] = pd.to_numeric(sub_df["Nota"], errors="coerce")
+        sub_df["Ponderación"] = pd.to_numeric(sub_df["Ponderación"], errors="coerce")
+        sub_df["Nota Ponderada"] = sub_df["Nota"] * (sub_df["Ponderación"] / 100)
+        tabla = sub_df.groupby("Nombre Atributo")[["Nota", "Ponderación", "Nota Ponderada"]].mean().reset_index()
+        st.markdown(f"### {rol}")
+        st.dataframe(tabla)
 
-    if total_ponderacion > 0:
-        score_global = sum((scores[k] * v for k, v in ponderaciones_validas.items())) / total_ponderacion
-        st.metric("⭐ Score Global", f"{score_global:.2f} / 4 ({((score_global - 1)/3 * 100):.1f}%)")
-    else:
-        st.warning("No hay suficientes datos para calcular el Score Global.")
-
-    # --- Mostrar tablas por Rol Evaluador ---
-    st.subheader("📑 Evaluación por dimensión y atributos")
-
-    for rol in roles:
-        df_rol = filtered_df[filtered_df["Rol Evaluador"] == rol]
-        if df_rol.empty or df_rol["Nota Final Evaluación"].isna().all():
-            continue
-
-        # Filtrar columnas de atributos
-        notas_cols = [col for col in df_rol.columns if "Nota" in col and "Final" not in col]
-        pondera_cols = [col for col in df_rol.columns if "Ponderación" in col and "Rol" not in col]
-
-        notas = df_rol[notas_cols].T
-        ponderaciones = df_rol[pondera_cols].T
-
-        notas.columns = ["Nota"]
-        ponderaciones.columns = ["Ponderación"]
-
-        tabla = notas.join(ponderaciones)
-        tabla["Nota Ponderada"] = (tabla["Nota"].astype(float) * tabla["Ponderación"].astype(float)) / 100
-        tabla = tabla.dropna(how="all")
-
-        st.write(f"#### {rol}")
-        st.dataframe(tabla.style.format({"Nota": "{:.2f}", "Ponderación": "{:.0f}%", "Nota Ponderada": "{:.2f}"}))
-
-    # --- Exportar a PDF (opcional más adelante) ---
-    # Aquí podríamos agregar lógica para exportar con pdfkit o similar
+# Botón para descargar PDF (placeholder, implementación real depende de PDF export)
+import streamlit.components.v1 as components
+st.subheader("Exportar a PDF")
+if st.button("Descargar PDF del colaborador"):
+    st.info("Funcionalidad en desarrollo. Requiere integración con librería de PDF como ReportLab o WeasyPrint.")
