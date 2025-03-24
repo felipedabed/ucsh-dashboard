@@ -6,7 +6,7 @@ import numpy as np
 st.markdown("""
 <style>
     .stDataFrame {
-        font-size: 12px;
+        font-size: 7px;
     }
     .stDataFrame th, .stDataFrame td {
         padding: 3px !important;
