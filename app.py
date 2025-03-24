@@ -119,37 +119,73 @@ info_ponderacion = pd.DataFrame({
 })
 st.dataframe(info_ponderacion)
 
-# Evaluación por dimensión y atributos (corregido correctamente)
 
+# UUUULTIMA SECCION
+
+
+# Evaluación por dimensión y atributos (con puntaje ponderado por atributo)
 st.subheader("Evaluación por dimensión y atributos")
 
-# Definir claramente los atributos según cada Rol Evaluador
 atributos_por_dimension = {
     "Autoevaluacion": [col for col in filtered_df.columns if col.startswith("Nota A")],
     "Indirecto": [col for col in filtered_df.columns if col.startswith("Nota EI")],
     "Jefatura": [col for col in filtered_df.columns if col.startswith("Nota ED")]
 }
 
-for dimension, columnas in atributos_por_dimension.items():
-    notas_dimension = filtered_df[columnas].copy()
-
-    # Transformar a formato largo para poder manejar atributos de forma sencilla
-    notas_dimension = notas_dimension.melt(var_name="Atributo", value_name="Nota")
+for dimension, columnas_nota in atributos_por_dimension.items():
+    columnas_ponderacion = [col.replace("Nota", "Ponderación") for col in columnas_nota]
     
-    # Eliminar atributos no evaluados
-    notas_dimension = notas_dimension[notas_dimension["Nota"].notna() & (notas_dimension["Nota"] != "-")]
+    # Verifica que todas las columnas existan en los datos
+    columnas_existentes = [col for col in columnas_nota + columnas_ponderacion if col in filtered_df.columns]
+    if len(columnas_existentes) < len(columnas_nota + columnas_ponderacion):
+        st.warning(f"Faltan columnas para la dimensión {dimension}.")
+        continue
+    
+    # Extraer notas y ponderaciones
+    notas_df = filtered_df[columnas_nota].copy()
+    ponderaciones_df = filtered_df[columnas_ponderacion].copy()
 
-    if not notas_dimension.empty:
-        notas_dimension["Nota"] = pd.to_numeric(notas_dimension["Nota"], errors="coerce")
-        tabla_atributos = notas_dimension.groupby("Atributo", as_index=False)["Nota"].mean().dropna()
+    # Formato largo para manejo sencillo
+    notas_melted = notas_df.melt(var_name="Atributo", value_name="Nota")
+    ponderaciones_melted = ponderaciones_df.melt(var_name="Atributo", value_name="Ponderacion")
 
-        # Mostrar la tabla con atributos evaluados
+    # Normalizar nombres para fusionar ambos dataframes
+    ponderaciones_melted["Atributo"] = ponderaciones_melted["Atributo"].str.replace("Ponderación ", "Nota ")
+
+    # Combinar notas y ponderaciones
+    atributos_combinados = pd.merge(notas_melted, ponderaciones_melted, on=["Atributo"])
+
+    # Eliminar filas no evaluadas
+    atributos_combinados = atributos_combinados[
+        atributos_combinados["Nota"].notna() &
+        (atributos_combinados["Nota"] != "-") &
+        atributos_combinados["Ponderacion"].notna()
+    ]
+
+    if not atributos_combinados.empty:
+        atributos_combinados["Nota"] = pd.to_numeric(atributos_combinados["Nota"], errors="coerce")
+        atributos_combinados["Ponderacion"] = pd.to_numeric(atributos_combinados["Ponderacion"], errors="coerce")
+
+        tabla_atributos = atributos_combinados.groupby("Atributo", as_index=False).agg({
+            "Nota": "mean",
+            "Ponderacion": "mean"
+        }).dropna()
+
+        tabla_atributos["Puntaje Ponderado"] = tabla_atributos["Nota"] * (tabla_atributos["Ponderacion"] / 100)
+
+        # Mostrar tabla final
         st.markdown(f"### {dimension}")
-        st.dataframe(tabla_atributos.rename(columns={"Nota": "Nota Promedio"}))
+        st.dataframe(
+            tabla_atributos.rename(columns={
+                "Nota": "Nota Promedio",
+                "Ponderacion": "Ponderación (%)",
+                "Puntaje Ponderado": "Puntaje Ponderado"
+            }).round(2)
+        )
     else:
-        # Informar si no hay datos evaluados en esta dimensión
         st.markdown(f"### {dimension}")
         st.info("No se encontraron atributos evaluados para esta dimensión.")
+
 
 # Descarga PDF (Placeholder)
 st.subheader("Exportar a PDF")
