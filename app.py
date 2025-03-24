@@ -46,28 +46,28 @@ pivot = filtered_df.pivot_table(index="RUT Colaborador", columns="Rol Evaluador"
 # Ponderaciones promedio por rol
 ponderaciones = filtered_df.groupby("Rol Evaluador")["Ponderación Rol Evaluación"].mean()
 
-# Calcular Score Global individual por colaborador
+# Función que calcula Score Global individual manejando NaNs adecuadamente
 def calcular_score_global(row):
     score = 0
-    suma_pesos = 0
+    peso_total = 0
     for rol in ["Autoevaluacion", "Indirecto", "Jefatura"]:
-        nota = row.get(rol, np.nan)
+        nota = row.get(rol)
         peso = ponderaciones.get(rol, np.nan)
         if not pd.isna(nota) and not pd.isna(peso):
-            score += nota * (peso / 100)
-            suma_pesos += peso
-    return score if suma_pesos > 0 else np.nan
+            score += nota * peso
+            peso_total += peso
+    return (score / peso_total) if peso_total else np.nan
 
 # Información del colaborador con scores individuales
 st.subheader("Información del colaborador")
 informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
 
-informacion["Nota Autoevaluación"] = informacion["RUT Colaborador"].map(pivot["Autoevaluacion"]) if "Autoevaluacion" in pivot else np.nan
-informacion["Nota Indirecto"] = informacion["RUT Colaborador"].map(pivot["Indirecto"]) if "Indirecto" in pivot else np.nan
-informacion["Nota Jefatura"] = informacion["RUT Colaborador"].map(pivot["Jefatura"]) if "Jefatura" in pivot else np.nan
+informacion["Nota Autoevaluación"] = informacion["RUT Colaborador"].map(pivot.get("Autoevaluacion"))
+informacion["Nota Indirecto"] = informacion["RUT Colaborador"].map(pivot.get("Indirecto"))
+informacion["Nota Jefatura"] = informacion["RUT Colaborador"].map(pivot.get("Jefatura"))
 
-# Aquí se arregló el cálculo individual del Score Global
-informacion["Score Global"] = pivot.apply(calcular_score_global, axis=1)
+# Aquí está la corrección definitiva del Score Global individual
+informacion["Score Global"] = pivot.apply(calcular_score_global, axis=1).round(3)
 
 # Categorías de desempeño individual
 def categoria_desempeno(score):
@@ -92,12 +92,14 @@ dimensiones_promedio = pivot.mean().dropna()
 st.bar_chart(dimensiones_promedio)
 
 # Mostrar puntajes explícitos sobre gráfico
-for dimension, puntaje in dimensiones_promedio.items():
-    st.markdown(f"**{dimension}**: {puntaje:.2f}")
+col1, col2, col3 = st.columns(3)
+cols = [col1, col2, col3]
+for i, (dimension, puntaje) in enumerate(dimensiones_promedio.items()):
+    cols[i].metric(label=dimension, value=f"{puntaje:.2f}")
 
 # Sección destacada Score Global promedio general
 st.subheader("Score Global Promedio")
-score_global_promedio = informacion["Score Global"].mean()
+score_global_promedio = informacion["Score Global"].mean().round(3)
 categoria_promedio = categoria_desempeno(score_global_promedio)
 
 col1, col2 = st.columns([1, 2])
@@ -116,7 +118,6 @@ resumen = pd.DataFrame({
     "Nota Obtenida %": [f"{((x-1)/3)*100:.0f}%" for x in dimensiones_promedio.values]
 })
 
-# Total ponderado promedio general (aquí está corregido)
 resumen.loc[len(resumen.index)] = ["Total ponderado", score_global_promedio, f"{((score_global_promedio-1)/3)*100:.0f}%"]
 st.dataframe(resumen)
 
