@@ -122,3 +122,4 @@ import streamlit.components.v1 as components
 st.subheader("Exportar a PDF")
 if st.button("Descargar PDF del colaborador"):
     st.info("Funcionalidad en desarrollo. Requiere integración con librería de PDF como ReportLab o WeasyPrint.")
+
