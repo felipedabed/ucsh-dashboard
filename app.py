@@ -1,7 +1,6 @@
 import streamlit as st 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
 # Cargar datos
 @st.cache_data
@@ -81,31 +80,22 @@ informacion["Categoría desempeño"] = informacion["Score Global"].apply(categor
 
 st.dataframe(informacion)
 
-# Gráfico de barras con puntajes por dimensión
+# Gráfico original de Streamlit con puntajes
 st.subheader("Puntaje por Dimensión (Escala 1-4)")
 
 dimensiones_promedio = pivot.mean().dropna()
+st.bar_chart(dimensiones_promedio)
 
-fig, ax = plt.subplots(figsize=(8,5))
-bars = ax.bar(dimensiones_promedio.index, dimensiones_promedio.values, color='skyblue')
-ax.set_ylim(0,4)
-ax.set_ylabel('Nota Promedio')
-ax.set_xlabel('Dimensión')
+# Mostrar puntajes explícitos sobre gráfico
+for dimension, puntaje in dimensiones_promedio.items():
+    st.markdown(f"**{dimension}**: {puntaje:.2f}")
 
-# Agregar puntajes sobre barras
-for bar in bars:
-    yval = bar.get_height()
-    ax.text(bar.get_x() + bar.get_width()/2, yval + 0.05, f'{yval:.2f}', ha='center', fontsize=12, fontweight='bold')
-
-st.pyplot(fig)
-
-# Nueva sección visual para el Score Global Promedio
+# Sección destacada Score Global
 st.subheader("Score Global Promedio")
-
 score_global_promedio = informacion["Score Global"].mean()
 categoria_promedio = categoria_desempeno(score_global_promedio)
 
-col1, col2 = st.columns([1,2])
+col1, col2 = st.columns([1, 2])
 
 with col1:
     st.metric(label="Score Global", value=f"{score_global_promedio:.2f}")
@@ -113,7 +103,7 @@ with col1:
 with col2:
     st.markdown(f"### Categoría: {categoria_promedio}")
 
-# Tabla resumen de notas por dimensión
+# Tabla resumen notas por dimensión
 st.subheader("Resumen de Notas por Dimensión")
 resumen = pd.DataFrame({
     "Dimensión": dimensiones_promedio.index,
@@ -123,7 +113,7 @@ resumen = pd.DataFrame({
 resumen.loc[len(resumen.index)] = ["Total ponderado", score_global_promedio, f"{((score_global_promedio-1)/3)*100:.0f}%"]
 st.dataframe(resumen)
 
-# Tabla informativa ponderaciones
+# Tabla ponderaciones
 st.subheader("Ponderación por Dimensión")
 info_ponderacion = pd.DataFrame({
     "Dimensión": ["Autoevaluación", "Indirecto", "Jefatura"],
