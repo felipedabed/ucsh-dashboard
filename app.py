@@ -188,6 +188,73 @@ for dimension, columnas_nota in atributos_por_dimension.items():
 
 
 # Descarga PDF (Placeholder)
+import io
+from fpdf import FPDF
+import zipfile
+
+def crear_pdf(rut, info_df, dimensiones_df):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    # Título
+    pdf.cell(200, 10, f"Evaluación UCSH - RUT {rut}", ln=True, align='C')
+
+    # Información del colaborador
+    pdf.cell(200, 10, "Información del Colaborador:", ln=True)
+    for col in info_df.columns:
+        pdf.cell(200, 10, f"{col}: {info_df.iloc[0][col]}", ln=True)
+
+    pdf.ln(10)
+
+    # Puntajes por dimensión
+    pdf.cell(200, 10, "Puntajes por Dimensión:", ln=True)
+    for idx, row in dimensiones_df.iterrows():
+        pdf.cell(200, 10, f"{row['Dimensión']}: {row['Nota Promedio']:.2f}", ln=True)
+
+    return pdf.output(dest='S').encode('latin1')
+
+def crear_zip_pdfs(df_filtrado, informacion):
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w') as zf:
+        for rut in informacion["RUT Colaborador"].unique():
+            info_colab = informacion[informacion["RUT Colaborador"] == rut]
+            pivot_colab = df_filtrado[df_filtrado["RUT Colaborador"] == rut].pivot_table(index="RUT Colaborador", columns="Rol Evaluador", values="Nota Final Evaluación", aggfunc="mean")
+            
+            dimensiones_colab = pivot_colab.mean().reset_index().rename(columns={0: "Nota Promedio", "Rol Evaluador": "Dimensión"})
+            pdf_bytes = crear_pdf(rut, info_colab, dimensiones_colab)
+
+            zf.writestr(f"{rut}.pdf", pdf_bytes)
+    return zip_buffer.getvalue()
+
+# Botones en Streamlit
 st.subheader("Exportar a PDF")
-if st.button("Descargar PDF del colaborador"):
-    st.info("Funcionalidad en desarrollo. Requiere integración con librería de PDF como ReportLab o WeasyPrint.")
+
+# PDF Individual
+if st.button("Descargar PDF del colaborador seleccionado"):
+    if len(informacion) == 1:
+        rut_seleccionado = informacion.iloc[0]["RUT Colaborador"]
+        pivot_colab = filtered_df.pivot_table(index="RUT Colaborador", columns="Rol Evaluador", values="Nota Final Evaluación", aggfunc="mean")
+        dimensiones_colab = pivot_colab.mean().reset_index().rename(columns={0: "Nota Promedio", "Rol Evaluador": "Dimensión"})
+
+        pdf_bytes = crear_pdf(rut_seleccionado, informacion, dimensiones_colab)
+        
+        st.download_button(
+            label="Descargar PDF",
+            data=pdf_bytes,
+            file_name=f"{rut_seleccionado}.pdf",
+            mime="application/pdf"
+        )
+    else:
+        st.warning("Por favor, selecciona exactamente un colaborador para descargar su PDF individual.")
+
+# PDF Bulk
+if st.button("Descargar PDFs de TODOS los colaboradores (ZIP)"):
+    zip_bytes = crear_zip_pdfs(filtered_df, informacion)
+
+    st.download_button(
+        label="Descargar ZIP con PDFs",
+        data=zip_bytes,
+        file_name="Evaluaciones_Colaboradores.zip",
+        mime="application/zip"
+    )
