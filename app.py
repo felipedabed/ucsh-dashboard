@@ -71,9 +71,10 @@ st.subheader("Información del colaborador")
 informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
 
 # Remover columnas anteriores y agregar columnas actualizadas correctamente
-informacion["Nota Autoevaluación"] = pivot.get("Autoevaluacion").values if "Autoevaluacion" in pivot else np.nan
-informacion["Nota Indirecto"] = pivot.get("Indirecto").values if "Indirecto" in pivot else np.nan
-informacion["Nota Jefatura"] = pivot.get("Jefatura").values if "Jefatura" in pivot else np.nan
+informacion["Nota Autoevaluación"] = informacion["RUT Colaborador"].map(pivot["Autoevaluacion"]) if "Autoevaluacion" in pivot else np.nan
+informacion["Nota Indirecto"] = informacion["RUT Colaborador"].map(pivot["Indirecto"]) if "Indirecto" in pivot else np.nan
+informacion["Nota Jefatura"] = informacion["RUT Colaborador"].map(pivot["Jefatura"]) if "Jefatura" in pivot else np.nan
+
 informacion["Score Global"] = score_global
 informacion["Categoría desempeño"] = categoria
 
