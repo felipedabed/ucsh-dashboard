@@ -123,7 +123,7 @@ st.dataframe(info_ponderacion)
 # UUUULTIMA SECCION
 
 
-# Evaluación por dimensión y atributos (con puntaje ponderado por atributo)
+# Evaluación por dimensión y atributos (con puntaje final por dimensión)
 st.subheader("Evaluación por dimensión y atributos")
 
 atributos_por_dimension = {
@@ -135,27 +135,21 @@ atributos_por_dimension = {
 for dimension, columnas_nota in atributos_por_dimension.items():
     columnas_ponderacion = [col.replace("Nota", "Ponderación") for col in columnas_nota]
     
-    # Verifica que todas las columnas existan en los datos
     columnas_existentes = [col for col in columnas_nota + columnas_ponderacion if col in filtered_df.columns]
     if len(columnas_existentes) < len(columnas_nota + columnas_ponderacion):
         st.warning(f"Faltan columnas para la dimensión {dimension}.")
         continue
     
-    # Extraer notas y ponderaciones
     notas_df = filtered_df[columnas_nota].copy()
     ponderaciones_df = filtered_df[columnas_ponderacion].copy()
 
-    # Formato largo para manejo sencillo
     notas_melted = notas_df.melt(var_name="Atributo", value_name="Nota")
     ponderaciones_melted = ponderaciones_df.melt(var_name="Atributo", value_name="Ponderacion")
 
-    # Normalizar nombres para fusionar ambos dataframes
     ponderaciones_melted["Atributo"] = ponderaciones_melted["Atributo"].str.replace("Ponderación ", "Nota ")
 
-    # Combinar notas y ponderaciones
     atributos_combinados = pd.merge(notas_melted, ponderaciones_melted, on=["Atributo"])
 
-    # Eliminar filas no evaluadas
     atributos_combinados = atributos_combinados[
         atributos_combinados["Nota"].notna() &
         (atributos_combinados["Nota"] != "-") &
@@ -171,20 +165,26 @@ for dimension, columnas_nota in atributos_por_dimension.items():
             "Ponderacion": "mean"
         }).dropna()
 
-        tabla_atributos["Puntaje Ponderado"] = tabla_atributos["Nota"] * (tabla_atributos["Ponderacion"] / 100)
+        # Cálculo del puntaje final por dimensión
+        tabla_atributos["Nota x Ponderación"] = tabla_atributos["Nota"] * tabla_atributos["Ponderacion"] / 100
+        puntaje_final_dimension = tabla_atributos["Nota x Ponderación"].sum()
 
-        # Mostrar tabla final
+        # Preparar tabla para visualización
+        tabla_visualizacion = tabla_atributos[["Atributo", "Nota", "Ponderacion"]].copy()
+        tabla_visualizacion = tabla_visualizacion.rename(columns={
+            "Nota": "Nota Promedio",
+            "Ponderacion": "Ponderación (%)"
+        }).round(2)
+
+        # Agregar fila final con Puntaje Final de la Dimensión
+        tabla_visualizacion.loc[len(tabla_visualizacion)] = ["**Puntaje Final Dimensión**", "", f"{puntaje_final_dimension:.2f}"]
+
         st.markdown(f"### {dimension}")
-        st.dataframe(
-            tabla_atributos.rename(columns={
-                "Nota": "Nota Promedio",
-                "Ponderacion": "Ponderación (%)",
-                "Puntaje Ponderado": "Puntaje Ponderado"
-            }).round(2)
-        )
+        st.dataframe(tabla_visualizacion)
     else:
         st.markdown(f"### {dimension}")
         st.info("No se encontraron atributos evaluados para esta dimensión.")
+
 
 
 # Descarga PDF (Placeholder)
