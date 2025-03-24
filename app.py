@@ -46,11 +46,15 @@ pivot = filtered_df.pivot_table(index="RUT Colaborador", columns="Rol Evaluador"
 # Calcular Score Global
 ponderaciones = filtered_df.groupby("Rol Evaluador")["Ponderación Rol Evaluación"].mean()
 score_global = 0
+suma_ponderaciones = 0
 for rol in ["Autoevaluacion", "Indirecto", "Jefatura"]:
-    nota = pivot.get(rol, np.nan).mean()
-    peso = ponderaciones.get(rol, np.nan)
-    if not pd.isna(nota) and not pd.isna(peso):
-        score_global += nota * (peso / 100)
+    if rol in pivot.columns:
+        nota = pivot[rol].mean()
+        peso = ponderaciones.get(rol, np.nan)
+        if not pd.isna(nota) and not pd.isna(peso):
+            score_global += nota * (peso / 100)
+            suma_ponderaciones += peso
+
 
 # Categoría de desempeño
 categoria = ""
