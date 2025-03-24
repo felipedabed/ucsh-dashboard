@@ -91,8 +91,7 @@ def categoria_desempeno(score):
         return "Desempeño insuficiente"
 
 informacion["Categoría desempeño"] = informacion["Score Global"].apply(categoria_desempeno)
-st.dataframe(informacion, height=(len(informacion)+1)*35)
-
+st.dataframe(informacion)
 # Puntaje promedio por dimensión
 st.subheader("Puntaje por Dimensión (Escala 1-4)")
 dimensiones_promedio = pivot.mean(skipna=True)
@@ -183,7 +182,7 @@ for dimension, columnas_nota in atributos_por_dimension.items():
         tabla_visualizacion.loc[len(tabla_visualizacion)] = ["**Puntaje Final Dimensión**", "", f"{puntaje_final_dimension:.2f}"]
 
         st.markdown(f"### {dimension}")
-        st.dataframe(tabla_visualizacion)
+        st.dataframe(tabla_visualizacion, height=(len(informacion)+1)*35)
     else:
         st.markdown(f"### {dimension}")
         st.info("No se encontraron atributos evaluados para esta dimensión.")
