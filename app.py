@@ -40,39 +40,39 @@ if filtered_df.empty:
     st.warning("No se encontraron datos para los filtros seleccionados.")
     st.stop()
 
-# Score por Rol Evaluador
+# Pivot por Rol Evaluador
 pivot = filtered_df.pivot_table(index="RUT Colaborador", columns="Rol Evaluador", values="Nota Final Evaluación", aggfunc="mean")
-
-# Asegurar siempre las columnas necesarias existan aunque no tengan datos
 pivot = pivot.reindex(columns=["Autoevaluacion", "Indirecto", "Jefatura"])
 
-# Calcular ponderaciones globales
+# Ponderaciones globales por rol
 ponderaciones = filtered_df.groupby("Rol Evaluador")["Ponderación Rol Evaluación"].mean()
 
-# Función para calcular score individual ajustado
+# Función correcta para calcular score individual
 def calcular_score(row):
-    score = 0
-    suma_ponderacion = 0
+    score, suma_ponderaciones = 0, 0
     for rol in ["Autoevaluacion", "Indirecto", "Jefatura"]:
         nota = row.get(rol)
         peso = ponderaciones.get(rol, np.nan)
         if not pd.isna(nota) and not pd.isna(peso):
-            score += nota * (peso / 100)
-            suma_ponderacion += peso
-    return score if suma_ponderacion else np.nan
+            score += nota * peso
+            suma_ponderaciones += peso
+    return score / suma_ponderaciones if suma_ponderaciones else np.nan
 
-# Información del colaborador con score individualizado
+# Información del colaborador con scores individuales corregidos
 st.subheader("Información del colaborador")
 informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
 
+# Notas individuales por rol
 informacion["Nota Autoevaluación"] = informacion["RUT Colaborador"].map(pivot["Autoevaluacion"])
 informacion["Nota Indirecto"] = informacion["RUT Colaborador"].map(pivot["Indirecto"])
 informacion["Nota Jefatura"] = informacion["RUT Colaborador"].map(pivot["Jefatura"])
+
+# Score Global individual
 informacion["Score Global"] = informacion.apply(lambda row: calcular_score({
     "Autoevaluacion": row["Nota Autoevaluación"],
     "Indirecto": row["Nota Indirecto"],
     "Jefatura": row["Nota Jefatura"]
-}), axis=1)
+}), axis=1).round(3)
 
 # Categoría desempeño individual
 def categoria_desempeno(score):
@@ -88,28 +88,30 @@ def categoria_desempeno(score):
         return "Desempeño insuficiente"
 
 informacion["Categoría desempeño"] = informacion["Score Global"].apply(categoria_desempeno)
-
 st.dataframe(informacion)
 
-# Gráfico de barras - Promedio Puntaje por Dimensión
+# Puntaje promedio por dimensión
 st.subheader("Puntaje por Dimensión (Escala 1-4)")
-dimensiones_promedio = pivot.mean().dropna()
+dimensiones_promedio = pivot.mean(skipna=True)
 st.bar_chart(dimensiones_promedio)
 
-# Tabla resumen con promedios correctos
+# Tabla resumen promedios correctos
 st.subheader("Resumen de Notas por Dimensión")
 resumen = pd.DataFrame({
     "Dimensión": dimensiones_promedio.index,
-    "Nota Promedio": dimensiones_promedio.values,
+    "Nota Promedio": dimensiones_promedio.values.round(3),
     "Nota Promedio %": [f"{((x-1)/3)*100:.0f}%" for x in dimensiones_promedio.values]
 })
 
-# Total ponderado promedio
-score_global_promedio = informacion["Score Global"].mean()
-resumen.loc[len(resumen)] = ["Total ponderado promedio", score_global_promedio, f"{((score_global_promedio-1)/3)*100:.0f}%"]
+# Total ponderado promedio correcto
+resumen.loc[len(resumen)] = [
+    "Total ponderado promedio",
+    informacion["Score Global"].mean().round(3),
+    f"{((informacion['Score Global'].mean()-1)/3)*100:.0f}%"
+]
 st.dataframe(resumen)
 
-# Tabla fija informativa
+# Tabla fija informativa (bien desde antes)
 st.subheader("Ponderación por Dimensión")
 info_ponderacion = pd.DataFrame({
     "Dimensión": ["Autoevaluación", "Indirecto", "Jefatura"],
@@ -117,7 +119,7 @@ info_ponderacion = pd.DataFrame({
 })
 st.dataframe(info_ponderacion)
 
-# Evaluación por dimensión y atributos
+# Evaluación por dimensión y atributos (sin cambios)
 st.subheader("Evaluación por dimensión y atributos")
 roles = filtered_df["Rol Evaluador"].unique()
 for rol in roles:
