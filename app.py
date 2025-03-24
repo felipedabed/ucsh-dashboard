@@ -1,21 +1,18 @@
 import streamlit as st
+import pandas as pd
+import numpy as np
 
-# CSS personalizado para tablas más compactas y completas
+# Aplica el CSS personalizado primero
 st.markdown("""
 <style>
-    /* Reduce márgenes y padding de tabla en general */
     .stDataFrame {
         font-size: 12px;
     }
-
-    /* Ajusta encabezados y celdas de tabla */
     .stDataFrame th, .stDataFrame td {
         padding: 3px !important;
-        white-space: nowrap; /* Evita que el texto se corte en varias líneas */
-        max-width: none; /* evita restricciones de ancho máximo */
+        white-space: nowrap;
+        max-width: none;
     }
-
-    /* Tabla ocupa ancho completo disponible */
     section.main > div {
         max-width: 100%;
         padding-left: 2rem;
@@ -24,10 +21,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-
-import pandas as pd
-import numpy as np
-
+# El resto de tu código sigue exactamente igual desde aquí
 
 # Cargar datos
 @st.cache_data
