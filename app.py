@@ -112,11 +112,12 @@ for rol in roles:
     sub_df = filtered_df[filtered_df["Rol Evaluador"] == rol].copy()
     if not sub_df.empty:
         sub_df["Nota"] = pd.to_numeric(sub_df["Nota Final Evaluación"], errors="coerce")
-        sub_df["Ponderación"] = pd.to_numeric(sub_df["Ponderación"], errors="coerce")
+        sub_df["Ponderación"] = pd.to_numeric(sub_df["Ponderación Rol Evaluación"], errors="coerce")
         sub_df["Nota Ponderada"] = sub_df["Nota"] * (sub_df["Ponderación"] / 100)
         tabla = sub_df.groupby("Nombre Atributo")[["Nota", "Ponderación", "Nota Ponderada"]].mean().reset_index()
         st.markdown(f"### {rol}")
         st.dataframe(tabla)
+
 
 # Descarga PDF (Placeholder)
 st.subheader("Exportar a PDF")
