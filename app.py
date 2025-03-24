@@ -182,7 +182,7 @@ for dimension, columnas_nota in atributos_por_dimension.items():
         tabla_visualizacion.loc[len(tabla_visualizacion)] = ["**Puntaje Final Dimensión**", "", f"{puntaje_final_dimension:.2f}"]
 
         st.markdown(f"### {dimension}")
-        st.dataframe(tabla_visualizacion, height=(len(informacion)+1)*35)
+        st.dataframe(tabla_visualizacion)
     else:
         st.markdown(f"### {dimension}")
         st.info("No se encontraron atributos evaluados para esta dimensión.")
