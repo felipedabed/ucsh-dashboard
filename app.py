@@ -120,30 +120,36 @@ info_ponderacion = pd.DataFrame({
 st.dataframe(info_ponderacion)
 
 # Evaluación por dimensión y atributos (corregido correctamente)
+
 st.subheader("Evaluación por dimensión y atributos")
 
-# Asegurarse que columnas existen para evitar errores
-columnas_requeridas = ["Nombre Atributo", "Nota Atributo", "Rol Evaluador"]
-if not all(col in filtered_df.columns for col in columnas_requeridas):
-    st.warning("Las columnas requeridas no existen en los datos cargados.")
-else:
-    roles = ["Autoevaluacion", "Indirecto", "Jefatura"]
-    for rol in roles:
-        sub_df = filtered_df[(filtered_df["Rol Evaluador"] == rol) & (filtered_df["Nota Atributo"] != "-")].copy()
-        if not sub_df.empty:
-            sub_df["Nota Atributo"] = pd.to_numeric(sub_df["Nota Atributo"], errors="coerce")
-            tabla = sub_df.groupby("Nombre Atributo", as_index=False)["Nota Atributo"].mean().dropna()
+# Definir claramente los atributos según cada Rol Evaluador
+atributos_por_dimension = {
+    "Autoevaluacion": [col for col in filtered_df.columns if col.startswith("Nota A")],
+    "Indirecto": [col for col in filtered_df.columns if col.startswith("Nota EI")],
+    "Jefatura": [col for col in filtered_df.columns if col.startswith("Nota ED")]
+}
 
-            if not tabla.empty:
-                st.markdown(f"### {rol}")
-                st.dataframe(tabla.rename(columns={"Nota Atributo": "Nota promedio"}))
-            else:
-                st.markdown(f"### {rol}")
-                st.info("No se encontraron atributos evaluados para esta dimensión.")
-        else:
-            st.markdown(f"### {rol}")
-            st.info("No se encontraron datos para esta dimensión.")
+for dimension, columnas in atributos_por_dimension.items():
+    notas_dimension = filtered_df[columnas].copy()
 
+    # Transformar a formato largo para poder manejar atributos de forma sencilla
+    notas_dimension = notas_dimension.melt(var_name="Atributo", value_name="Nota")
+    
+    # Eliminar atributos no evaluados
+    notas_dimension = notas_dimension[notas_dimension["Nota"].notna() & (notas_dimension["Nota"] != "-")]
+
+    if not notas_dimension.empty:
+        notas_dimension["Nota"] = pd.to_numeric(notas_dimension["Nota"], errors="coerce")
+        tabla_atributos = notas_dimension.groupby("Atributo", as_index=False)["Nota"].mean().dropna()
+
+        # Mostrar la tabla con atributos evaluados
+        st.markdown(f"### {dimension}")
+        st.dataframe(tabla_atributos.rename(columns={"Nota": "Nota Promedio"}))
+    else:
+        # Informar si no hay datos evaluados en esta dimensión
+        st.markdown(f"### {dimension}")
+        st.info("No se encontraron atributos evaluados para esta dimensión.")
 
 # Descarga PDF (Placeholder)
 st.subheader("Exportar a PDF")
