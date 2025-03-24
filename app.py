@@ -62,9 +62,11 @@ def calcular_score(row):
 st.subheader("Información del colaborador")
 informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
 
-informacion["Nota Autoevaluación"] = informacion["RUT Colaborador"].map(pivot.get("Autoevaluacion"))
-informacion["Nota Indirecto"] = informacion["RUT Colaborador"].map(pivot.get("Indirecto"))
-informacion["Nota Jefatura"] = informacion["RUT Colaborador"].map(pivot.get("Jefatura"))
+# Manejo de casos que faltan (corrección aquí)
+informacion["Nota Autoevaluación"] = informacion["RUT Colaborador"].map(pivot["Autoevaluacion"]) if "Autoevaluacion" in pivot else np.nan
+informacion["Nota Indirecto"] = informacion["RUT Colaborador"].map(pivot["Indirecto"]) if "Indirecto" in pivot else np.nan
+informacion["Nota Jefatura"] = informacion["RUT Colaborador"].map(pivot["Jefatura"]) if "Jefatura" in pivot else np.nan
+
 informacion["Score Global"] = informacion.apply(lambda row: calcular_score({
     "Autoevaluacion": row["Nota Autoevaluación"],
     "Indirecto": row["Nota Indirecto"],
@@ -73,6 +75,8 @@ informacion["Score Global"] = informacion.apply(lambda row: calcular_score({
 
 # Categoría desempeño individual
 def categoria_desempeno(score):
+    if pd.isna(score):
+        return "Sin evaluación"
     if score >= 3.6:
         return "Desempeño destacado"
     elif score >= 2.8:
@@ -101,7 +105,7 @@ resumen = pd.DataFrame({
 
 # Total ponderado promedio
 score_global_promedio = informacion["Score Global"].mean()
-resumen.loc[len(resumen)] = ["Score global", score_global_promedio, f"{((score_global_promedio-1)/3)*100:.0f}%"]
+resumen.loc[len(resumen)] = ["Total ponderado promedio", score_global_promedio, f"{((score_global_promedio-1)/3)*100:.0f}%"]
 st.dataframe(resumen)
 
 # Tabla fija informativa (estaba correcta)
