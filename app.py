@@ -188,6 +188,14 @@ for dimension, columnas_nota in atributos_por_dimension.items():
 
 
 # Descarga PDF (Placeholder)
+
+from reportlab.pdfgen import canvas
+
+def generar_pdf():
+    c = canvas.Canvas("archivo.pdf")
+    c.drawString(100,750,"Hola desde ReportLab!")
+    c.save()
+
 import io
 from fpdf import FPDF
 import zipfile
