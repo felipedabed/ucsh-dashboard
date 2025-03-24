@@ -3,8 +3,7 @@ import pandas as pd
 import numpy as np
 from io import BytesIO
 import base64
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
 
 # Cargar datos
 @st.cache_data
@@ -81,12 +80,11 @@ st.dataframe(informacion)
 # Gráfico de barras - Puntaje por Dimensión
 st.subheader("Puntaje por Dimensión (Escala 1-4)")
 notas = pivot.loc[pivot.index[0]].dropna() if not pivot.empty else pd.Series()
-fig, ax = plt.subplots()
-notas.plot(kind="bar", ax=ax, ylim=(1,4), color='skyblue')
-for i, v in enumerate(notas):
-    ax.text(i, v + 0.05, f"{v:.2f}", ha='center', va='bottom')
-plt.ylabel("Nota")
-st.pyplot(fig)
+notas_df = pd.DataFrame({"Dimensión": notas.index, "Nota": notas.values})
+fig_bar = px.bar(notas_df, x="Dimensión", y="Nota", text="Nota", range_y=[1, 4])
+fig_bar.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+fig_bar.update_layout(yaxis_title="Nota", xaxis_title="Rol Evaluador", uniformtext_minsize=8)
+st.plotly_chart(fig_bar)
 
 # Tabla resumen
 st.subheader("Resumen de Notas por Dimensión")
