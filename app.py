@@ -1,9 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from io import BytesIO
-import base64
-import plotly.express as px
 
 # Cargar datos
 @st.cache_data
@@ -49,11 +46,15 @@ pivot = filtered_df.pivot_table(index="RUT Colaborador", columns="Rol Evaluador"
 # Calcular Score Global
 ponderaciones = filtered_df.groupby("Rol Evaluador")["Ponderación Rol Evaluación"].mean()
 score_global = 0
+suma_ponderaciones = 0
 for rol in ["Autoevaluacion", "Indirecto", "Jefatura"]:
-    nota = pivot.get(rol, np.nan).mean()
-    peso = ponderaciones.get(rol, np.nan)
-    if not pd.isna(nota) and not pd.isna(peso):
-        score_global += nota * (peso / 100)
+    if rol in pivot.columns:
+        nota = pivot[rol].mean()
+        peso = ponderaciones.get(rol, np.nan)
+        if not pd.isna(nota) and not pd.isna(peso):
+            score_global += nota * (peso / 100)
+            suma_ponderaciones += peso
+
 
 # Categoría de desempeño
 categoria = ""
@@ -68,20 +69,17 @@ else:
 
 st.subheader("Información del colaborador")
 informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
-informacion["Autoevaluación"] = pivot.get("Autoevaluacion").values
-informacion["Indirecto"] = pivot.get("Indirecto").values
-informacion["Jefatura"] = pivot.get("Jefatura").values
+informacion["Puntaje Autoevaluación"] = pivot["Autoevaluacion"] if "Autoevaluacion" in pivot else np.nan
+informacion["Puntaje Indirecto"] = pivot["Indirecto"] if "Indirecto" in pivot else np.nan
+informacion["Puntaje Jefatura"] = pivot["Jefatura"] if "Jefatura" in pivot else np.nan
 informacion["Score Global"] = score_global
+informacion["Categoría desempeño"] = categoria
 st.dataframe(informacion)
 
-# Gráfico de barras - Puntaje por Dimensión
+# Gráfico de barras - Puntaje por Dimensión (ahora con gráfico nativo)
 st.subheader("Puntaje por Dimensión (Escala 1-4)")
 notas = pivot.loc[pivot.index[0]].dropna() if not pivot.empty else pd.Series()
-notas_df = pd.DataFrame({"Dimensión": notas.index, "Nota": notas.values})
-fig_bar = px.bar(notas_df, x="Dimensión", y="Nota", text="Nota", range_y=[1, 4])
-fig_bar.update_traces(texttemplate='%{text:.2f}', textposition='outside')
-fig_bar.update_layout(yaxis_title="Nota", xaxis_title="Rol Evaluador", uniformtext_minsize=8)
-st.plotly_chart(fig_bar)
+st.bar_chart(notas)
 
 # Tabla resumen
 st.subheader("Resumen de Notas por Dimensión")
@@ -114,7 +112,7 @@ for rol in roles:
         st.markdown(f"### {rol}")
         st.dataframe(tabla)
 
-# Botón para descargar PDF (placeholder)
+# Descarga PDF (Placeholder)
 st.subheader("Exportar a PDF")
 if st.button("Descargar PDF del colaborador"):
     st.info("Funcionalidad en desarrollo. Requiere integración con librería de PDF como ReportLab o WeasyPrint.")
