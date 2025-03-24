@@ -119,18 +119,31 @@ info_ponderacion = pd.DataFrame({
 })
 st.dataframe(info_ponderacion)
 
-# Evaluación por dimensión y atributos (sin cambios)
+# Evaluación por dimensión y atributos (corregido correctamente)
 st.subheader("Evaluación por dimensión y atributos")
-roles = filtered_df["Rol Evaluador"].unique()
-for rol in roles:
-    sub_df = filtered_df[filtered_df["Rol Evaluador"] == rol].copy()
-    if not sub_df.empty:
-        sub_df["Nota"] = pd.to_numeric(sub_df["Nota"], errors="coerce")
-        sub_df["Ponderación"] = pd.to_numeric(sub_df["Ponderación"], errors="coerce")
-        sub_df["Nota Ponderada"] = sub_df["Nota"] * (sub_df["Ponderación"] / 100)
-        tabla = sub_df.groupby("Nombre Atributo")[["Nota", "Ponderación", "Nota Ponderada"]].mean().reset_index()
-        st.markdown(f"### {rol}")
-        st.dataframe(tabla)
+
+# Asegurarse que columnas existen para evitar errores
+columnas_requeridas = ["Nombre Atributo", "Nota Atributo", "Rol Evaluador"]
+if not all(col in filtered_df.columns for col in columnas_requeridas):
+    st.warning("Las columnas requeridas no existen en los datos cargados.")
+else:
+    roles = ["Autoevaluacion", "Indirecto", "Jefatura"]
+    for rol in roles:
+        sub_df = filtered_df[(filtered_df["Rol Evaluador"] == rol) & (filtered_df["Nota Atributo"] != "-")].copy()
+        if not sub_df.empty:
+            sub_df["Nota Atributo"] = pd.to_numeric(sub_df["Nota Atributo"], errors="coerce")
+            tabla = sub_df.groupby("Nombre Atributo", as_index=False)["Nota Atributo"].mean().dropna()
+
+            if not tabla.empty:
+                st.markdown(f"### {rol}")
+                st.dataframe(tabla.rename(columns={"Nota Atributo": "Nota promedio"}))
+            else:
+                st.markdown(f"### {rol}")
+                st.info("No se encontraron atributos evaluados para esta dimensión.")
+        else:
+            st.markdown(f"### {rol}")
+            st.info("No se encontraron datos para esta dimensión.")
+
 
 # Descarga PDF (Placeholder)
 st.subheader("Exportar a PDF")
