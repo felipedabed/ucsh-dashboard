@@ -8,29 +8,12 @@ import numpy as np
 # Cargar datos
 @st.cache_data
 def load_data():
-    try:
-        df = pd.read_csv("data/Resultados_ROL.csv", delimiter=",", encoding="ISO-8859-1")
-        df.columns = df.columns.str.strip()  # Limpia espacios
+    df = pd.read_csv("data/Resultados_ROL.csv", delimiter=",", encoding="ISO-8859-1")
+    df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors='coerce')
+    df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"].replace("-", np.nan), errors='coerce')
+    return df
 
-        # Validaciones clave
-        required_cols = ["RUT Colaborador", "Nota Final Evaluación", "Ponderación Rol Evaluación"]
-        for col in required_cols:
-            if col not in df.columns:
-                st.error(f"❌ Falta la columna obligatoria: '{col}' en el CSV")
-                st.stop()
-
-        df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors='coerce')
-        df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"].replace("-", np.nan), errors='coerce')
-
-        return df
-    except Exception as e:
-        st.error(f"Error al cargar los datos: {e}")
-        st.stop()
-
-# Llamar a la función de carga
 df = load_data()
-
-
 
 st.title("Panel de Evaluación UCSH")
 
@@ -42,9 +25,6 @@ with st.sidebar:
     gerencia_filter = st.selectbox("Gerencia", options=["Todos"] + sorted(df["Gerencia"].dropna().unique().tolist()))
     centro_filter = st.selectbox("Centro de Costo", options=["Todos"] + sorted(df["Centro de Costo"].dropna().unique().tolist()))
     sucursal_filter = st.selectbox("Sucursal", options=["Todos"] + sorted(df["Sucursal"].dropna().unique().tolist()))
-    familia_cargo_filter = st.selectbox("Familia del Cargo", options=["Todos"] + sorted(df["Familia del Cargo"].dropna().unique().tolist()))
-
-
 
 # Aplicar filtros
 filtered_df = df.copy()
@@ -58,9 +38,6 @@ if centro_filter != "Todos":
     filtered_df = filtered_df[filtered_df["Centro de Costo"] == centro_filter]
 if sucursal_filter != "Todos":
     filtered_df = filtered_df[filtered_df["Sucursal"] == sucursal_filter]
-if familia_cargo_filter != "Todos":
-    filtered_df = filtered_df[filtered_df["Familia del Cargo"] == familia_cargo_filter]
-
 
 if filtered_df.empty:
     st.warning("No se encontraron datos para los filtros seleccionados.")
@@ -86,7 +63,7 @@ def calcular_score(row):
 
 # Información del colaborador con scores individuales corregidos
 st.subheader("Información del colaborador")
-informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo", "Familia del Cargo"]].drop_duplicates()
+informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
 
 # Notas individuales por rol
 informacion["Nota Autoevaluación"] = informacion["RUT Colaborador"].map(pivot["Autoevaluacion"])
@@ -149,8 +126,6 @@ st.dataframe(info_ponderacion)
 
 
 # Evaluación por dimensión y atributos (con puntaje final por dimensión)
-
-# Evaluación por dimensión y atributos (con puntaje final por dimensión, máximo 10 filas)
 st.subheader("Evaluación por dimensión y atributos")
 
 atributos_por_dimension = {
@@ -190,7 +165,7 @@ for dimension, columnas_nota in atributos_por_dimension.items():
         tabla_atributos = atributos_combinados.groupby("Atributo", as_index=False).agg({
             "Nota": "mean",
             "Ponderacion": "mean"
-        }).dropna().head(10)  # Aquí limita a 10 filas
+        }).dropna()
 
         # Cálculo del puntaje final por dimensión
         tabla_atributos["Nota x Ponderación"] = tabla_atributos["Nota"] * tabla_atributos["Ponderacion"] / 100
@@ -211,7 +186,6 @@ for dimension, columnas_nota in atributos_por_dimension.items():
     else:
         st.markdown(f"### {dimension}")
         st.info("No se encontraron atributos evaluados para esta dimensión.")
-
 
 ### DE AQUI PA ABAJO TIRAR ERRORES
 
