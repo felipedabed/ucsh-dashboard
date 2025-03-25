@@ -8,20 +8,28 @@ import numpy as np
 # Cargar datos
 @st.cache_data
 def load_data():
-    df = pd.read_csv("data/Resultados_ROL.csv", delimiter=",", encoding="ISO-8859-1")
+    try:
+        df = pd.read_csv("data/Resultados_ROL.csv", delimiter=",", encoding="ISO-8859-1")
+        df.columns = df.columns.str.strip()  # Limpia espacios
 
-    # ⚠️ Esta línea es CLAVE: limpia espacios y caracteres raros en los nombres de columna
-    df.columns = df.columns.str.strip()
+        # Validaciones clave
+        required_cols = ["RUT Colaborador", "Nota Final Evaluación", "Ponderación Rol Evaluación"]
+        for col in required_cols:
+            if col not in df.columns:
+                st.error(f"❌ Falta la columna obligatoria: '{col}' en el CSV")
+                st.stop()
 
-    # Validación: asegurarse que existe la columna correcta
-    if "Nota Final Evaluación" not in df.columns:
-        st.error("No se encuentra la columna 'Nota Final Evaluación'. Verifica los nombres en el CSV.")
+        df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors='coerce')
+        df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"].replace("-", np.nan), errors='coerce')
+
+        return df
+    except Exception as e:
+        st.error(f"Error al cargar los datos: {e}")
         st.stop()
 
-    df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors='coerce')
-    df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"].replace("-", np.nan), errors='coerce')
+# Llamar a la función de carga
+df = load_data()
 
-    return df
 
 
 st.title("Panel de Evaluación UCSH")
