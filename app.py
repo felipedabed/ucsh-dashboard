@@ -126,6 +126,8 @@ st.dataframe(info_ponderacion)
 
 
 # Evaluación por dimensión y atributos (con puntaje final por dimensión)
+
+# Evaluación por dimensión y atributos (con puntaje final por dimensión, máximo 10 filas)
 st.subheader("Evaluación por dimensión y atributos")
 
 atributos_por_dimension = {
@@ -165,7 +167,7 @@ for dimension, columnas_nota in atributos_por_dimension.items():
         tabla_atributos = atributos_combinados.groupby("Atributo", as_index=False).agg({
             "Nota": "mean",
             "Ponderacion": "mean"
-        }).dropna()
+        }).dropna().head(10)  # Aquí limita a 10 filas
 
         # Cálculo del puntaje final por dimensión
         tabla_atributos["Nota x Ponderación"] = tabla_atributos["Nota"] * tabla_atributos["Ponderacion"] / 100
@@ -186,6 +188,7 @@ for dimension, columnas_nota in atributos_por_dimension.items():
     else:
         st.markdown(f"### {dimension}")
         st.info("No se encontraron atributos evaluados para esta dimensión.")
+
 
 ### DE AQUI PA ABAJO TIRAR ERRORES
 
