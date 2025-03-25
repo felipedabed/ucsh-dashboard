@@ -66,7 +66,7 @@ def calcular_score(row):
 
 # Información del colaborador con scores individuales corregidos
 st.subheader("Información del colaborador")
-informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
+informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo", "Familia del Cargo"]].drop_duplicates()
 
 # Notas individuales por rol
 informacion["Nota Autoevaluación"] = informacion["RUT Colaborador"].map(pivot["Autoevaluacion"])
