@@ -9,12 +9,20 @@ import numpy as np
 @st.cache_data
 def load_data():
     df = pd.read_csv("data/Resultados_ROL.csv", delimiter=",", encoding="ISO-8859-1")
-    df.columns = df.columns.str.strip()  # Limpia espacios al inicio/final de nombres de columnas
+
+    # ⚠️ Esta línea es CLAVE: limpia espacios y caracteres raros en los nombres de columna
+    df.columns = df.columns.str.strip()
+
+    # Validación: asegurarse que existe la columna correcta
+    if "Nota Final Evaluación" not in df.columns:
+        st.error("No se encuentra la columna 'Nota Final Evaluación'. Verifica los nombres en el CSV.")
+        st.stop()
+
     df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors='coerce')
     df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"].replace("-", np.nan), errors='coerce')
+
     return df
 
-df = load_data()
 
 st.title("Panel de Evaluación UCSH")
 
