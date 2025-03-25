@@ -10,7 +10,6 @@ import numpy as np
 def load_data():
     df = pd.read_csv("data/Resultados_ROL.csv", delimiter=",", encoding="ISO-8859-1")
     df.columns = df.columns.str.strip()
-    st.write(df.columns.tolist())
     df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors='coerce')
     df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"].replace("-", np.nan), errors='coerce')
     return df
