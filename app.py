@@ -26,6 +26,9 @@ with st.sidebar:
     centro_filter = st.selectbox("Centro de Costo", options=["Todos"] + sorted(df["Centro de Costo"].dropna().unique().tolist()))
     sucursal_filter = st.selectbox("Sucursal", options=["Todos"] + sorted(df["Sucursal"].dropna().unique().tolist()))
 
+    sucursal_filter = st.selectbox("Familia del Cargo", options=["Todos"] + sorted(df["Familia del Cargo"].dropna().unique().tolist()))
+
+
 # Aplicar filtros
 filtered_df = df.copy()
 if rut_filter != "Todos":
@@ -38,6 +41,9 @@ if centro_filter != "Todos":
     filtered_df = filtered_df[filtered_df["Centro de Costo"] == centro_filter]
 if sucursal_filter != "Todos":
     filtered_df = filtered_df[filtered_df["Sucursal"] == sucursal_filter]
+ if sucursal_filter != "Todos":
+    filtered_df = filtered_df[filtered_df["Familia del Cargo"] == sucursal_filter]
+
 
 if filtered_df.empty:
     st.warning("No se encontraron datos para los filtros seleccionados.")
@@ -63,7 +69,7 @@ def calcular_score(row):
 
 # Información del colaborador con scores individuales corregidos
 st.subheader("Información del colaborador")
-informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo"]].drop_duplicates()
+informacion = filtered_df[["RUT Colaborador", "Nombre Colaborador", "Cargo", "Gerencia", "Sucursal", "Centro de Costo", "Familia del Cargo"]].drop_duplicates()
 
 # Notas individuales por rol
 informacion["Nota Autoevaluación"] = informacion["RUT Colaborador"].map(pivot["Autoevaluacion"])
