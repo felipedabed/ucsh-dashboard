@@ -41,7 +41,7 @@ if centro_filter != "Todos":
     filtered_df = filtered_df[filtered_df["Centro de Costo"] == centro_filter]
 if sucursal_filter != "Todos":
     filtered_df = filtered_df[filtered_df["Sucursal"] == sucursal_filter]
- if sucursal_filter != "Todos":
+if sucursal_filter != "Todos":
     filtered_df = filtered_df[filtered_df["Familia del Cargo"] == sucursal_filter]
 
 
