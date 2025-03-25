@@ -25,7 +25,7 @@ with st.sidebar:
     gerencia_filter = st.selectbox("Gerencia", options=["Todos"] + sorted(df["Gerencia"].dropna().unique().tolist()))
     centro_filter = st.selectbox("Centro de Costo", options=["Todos"] + sorted(df["Centro de Costo"].dropna().unique().tolist()))
     sucursal_filter = st.selectbox("Sucursal", options=["Todos"] + sorted(df["Sucursal"].dropna().unique().tolist()))
-    familia_filter = st.selectbox("Familia de Cargo ", options=["Todos"] + sorted(df["Familia de Cargo "].dropna().unique().tolist()))
+    familia_filter = st.selectbox("Familia de Cargo", options=["Todos"] + sorted(df["Familia de Cargo"].dropna().unique().tolist()))
 
 
 # Aplicar filtros
