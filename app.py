@@ -9,14 +9,27 @@ import numpy as np
 @st.cache_data
 def load_data():
     df = pd.read_csv("data/Resultados_ROL.csv", delimiter=",", encoding="ISO-8859-1")
-    st.write("Columnas disponibles:", df.columns.tolist())
 
-    df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors='coerce')
-    df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"].replace("-", np.nan), errors='coerce')
+    # Normaliza los nombres de columnas
+    df.columns = df.columns.str.strip().str.replace("\u00a0", " ").str.replace("\ufeff", "")
+
+    # Muestra los nombres de las columnas inmediatamente
+    st.write("Columnas disponibles en el archivo:", df.columns.tolist())
+
+    # Solo después de revisar columnas, intenta convertir
+    if "Nota Final Evaluación" in df.columns:
+        df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors='coerce')
+    else:
+        st.error("❌ No se encontró la columna 'Nota Final Evaluación'")
+        st.stop()
+
+    if "Ponderación Rol Evaluación" in df.columns:
+        df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"].replace("-", np.nan), errors='coerce')
+    else:
+        st.error("❌ No se encontró la columna 'Ponderación Rol Evaluación'")
+        st.stop()
+
     return df
-
-
-df = load_data()
 
 st.title("Panel de Evaluación UCSH")
 
