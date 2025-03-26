@@ -9,9 +9,12 @@ import numpy as np
 @st.cache_data
 def load_data():
     df = pd.read_csv("data/Resultados_ROL.csv", delimiter=",", encoding="ISO-8859-1")
+    st.write("Columnas disponibles:", df.columns.tolist())
+
     df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors='coerce')
     df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"].replace("-", np.nan), errors='coerce')
     return df
+
 
 df = load_data()
 
