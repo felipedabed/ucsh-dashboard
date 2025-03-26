@@ -11,8 +11,6 @@ def load_data():
     df = pd.read_csv("data/Resultados_ROL.csv", delimiter=",", encoding="utf-8")
     df.columns = df.columns.str.strip().str.replace("\u00a0", " ").str.replace("\ufeff", "")
     
-    st.write("Columnas disponibles en el archivo:", df.columns.tolist())
-
     # Validaciones
     columnas_requeridas = ["Nota Final Evaluación", "Ponderación Rol Evaluación"]
     for col in columnas_requeridas:
