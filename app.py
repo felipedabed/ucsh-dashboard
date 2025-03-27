@@ -60,6 +60,24 @@ if filtered_df.empty:
     st.warning("No se encontraron datos para los filtros seleccionados.")
     st.stop()
 
+
+
+
+
+
+
+
+###DATA EXTRA
+
+# Obtener RUT único si hay un colaborador seleccionado
+rut_colaborador = informacion["RUT Colaborador"].values[0] if len(informacion) == 1 else "Evaluacion_UCSH"
+##DATA EXTRA
+
+
+
+
+
+
 # Pivot por Rol Evaluador
 pivot = filtered_df.pivot_table(index="RUT Colaborador", columns="Rol Evaluador", values="Nota Final Evaluación", aggfunc="mean")
 pivot = pivot.reindex(columns=["Autoevaluacion", "Indirecto", "Jefatura"])
@@ -277,15 +295,20 @@ st.markdown("""
 
 ##### IMPRIMIR 
 
-st.markdown("""
+st.markdown(f"""
     <script>
-        function printPage() {
+        function printPDF() {{
+            const filename = "{rut_colaborador}.pdf";
+            document.title = filename;  // Esto cambia el título de la pestaña temporalmente
             window.print();
-        }
+            setTimeout(() => {{
+                document.title = "Panel de Evaluación UCSH";  // Restaurar título
+            }}, 3000);
+        }}
     </script>
 
     <div style="text-align: center; margin-top: 20px;">
-        <button onclick="printPage()" style="
+        <button onclick="printPDF()" style="
             background-color: #4CAF50;
             color: white;
             padding: 10px 20px;
@@ -297,4 +320,5 @@ st.markdown("""
         </button>
     </div>
 """, unsafe_allow_html=True)
+
 
