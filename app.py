@@ -130,6 +130,34 @@ resumen.loc[len(resumen)] = [
 ]
 st.dataframe(resumen)
 
+if len(informacion) == 1:
+    st.subheader("Resumen por Dimensión")
+
+    autoeval = dimensiones_promedio.get("Autoevaluacion", np.nan)
+    indirecto = dimensiones_promedio.get("Indirecto", np.nan)
+    jefatura = dimensiones_promedio.get("Jefatura", np.nan)
+
+    st.markdown(f"""
+    <div style="display: flex; justify-content: space-between; gap: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <div style="flex: 1; background-color: #f1f8e9; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="font-size: 26px;">🧠</div>
+            <div style="font-size: 16px; font-weight: bold; margin-top: 5px;">Autoevaluación</div>
+            <div style="font-size: 22px; color: #2e7d32; font-weight: bold;">{autoeval:.2f}</div>
+        </div>
+        <div style="flex: 1; background-color: #e3f2fd; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="font-size: 26px;">👥</div>
+            <div style="font-size: 16px; font-weight: bold; margin-top: 5px;">Evaluación Indirecta</div>
+            <div style="font-size: 22px; color: #1565c0; font-weight: bold;">{indirecto:.2f}</div>
+        </div>
+        <div style="flex: 1; background-color: #fce4ec; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="font-size: 26px;">👔</div>
+            <div style="font-size: 16px; font-weight: bold; margin-top: 5px;">Evaluación Jefatura</div>
+            <div style="font-size: 22px; color: #ad1457; font-weight: bold;">{jefatura:.2f}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
 # Categoría de Desempeño con estilo visual y emoji
 if len(informacion) == 1:
     st.subheader("Categoría de Desempeño Obtenida")
