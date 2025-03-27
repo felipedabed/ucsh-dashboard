@@ -279,32 +279,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-##### IMPRIMIR 
 
-st.markdown(f"""
-    <script>
-        function printPDF() {{
-            const filename = "{rut_colaborador}.pdf";
-            document.title = filename;  // Esto cambia el título de la pestaña temporalmente
-            window.print();
-            setTimeout(() => {{
-                document.title = "Panel de Evaluación UCSH";  // Restaurar título
-            }}, 3000);
-        }}
-    </script>
-
-    <div style="text-align: center; margin-top: 20px;">
-        <button onclick="printPDF()" style="
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;">
-            🖨️ Imprimir Evaluación / Guardar como PDF
-        </button>
-    </div>
-""", unsafe_allow_html=True)
 
 
