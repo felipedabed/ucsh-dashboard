@@ -2,4 +2,5 @@ streamlit
 pandas
 numpy
 plotly==5.20.0
-
+pdfkit
+jinja2
