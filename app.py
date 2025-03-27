@@ -109,26 +109,7 @@ def categoria_desempeno(score):
 
 informacion["Categoría desempeño"] = informacion["Score Global"].apply(categoria_desempeno)
 st.dataframe(informacion)
-# Puntaje promedio por dimensión
-st.subheader("Puntaje por Dimensión (Escala 1-4)")
-dimensiones_promedio = pivot.mean(skipna=True)
-st.bar_chart(dimensiones_promedio)
 
-# Tabla resumen promedios correctos
-st.subheader("Resumen de Notas por Dimensión")
-resumen = pd.DataFrame({
-    "Dimensión": dimensiones_promedio.index,
-    "Nota Promedio": dimensiones_promedio.values.round(3),
-    "Nota Promedio %": [f"{((x-1)/3)*100:.0f}%" for x in dimensiones_promedio.values]
-})
-
-# Total ponderado promedio correcto
-resumen.loc[len(resumen)] = [
-    "Total ponderado promedio",
-    informacion["Score Global"].mean().round(3),
-    f"{((informacion['Score Global'].mean()-1)/3)*100:.0f}%"
-]
-st.dataframe(resumen)
 
 if len(informacion) == 1:
     st.subheader("Resumen por Dimensión")
@@ -189,6 +170,28 @@ if len(informacion) == 1:
         """,
         unsafe_allow_html=True
     )
+
+
+# Puntaje promedio por dimensión
+st.subheader("Puntaje por Dimensión (Escala 1-4)")
+dimensiones_promedio = pivot.mean(skipna=True)
+st.bar_chart(dimensiones_promedio)
+
+# Tabla resumen promedios correctos
+st.subheader("Resumen de Notas por Dimensión")
+resumen = pd.DataFrame({
+    "Dimensión": dimensiones_promedio.index,
+    "Nota Promedio": dimensiones_promedio.values.round(3),
+    "Nota Promedio %": [f"{((x-1)/3)*100:.0f}%" for x in dimensiones_promedio.values]
+})
+
+# Total ponderado promedio correcto
+resumen.loc[len(resumen)] = [
+    "Total ponderado promedio",
+    informacion["Score Global"].mean().round(3),
+    f"{((informacion['Score Global'].mean()-1)/3)*100:.0f}%"
+]
+st.dataframe(resumen)
 
 
 # UUUULTIMA SECCION
