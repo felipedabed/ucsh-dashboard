@@ -263,7 +263,7 @@ for dimension, columnas_nota in atributos_por_dimension.items():
         }).round(2)
 
         # Agregar fila final con Puntaje Final de la Dimensión
-        tabla_visualizacion.loc[len(tabla_visualizacion)] = ["**Puntaje Final Dimensión**", "", f"{puntaje_final_dimension:.2f}"]
+       # tabla_visualizacion.loc[len(tabla_visualizacion)] = ["**Puntaje Final Dimensión**", "", f"{puntaje_final_dimension:.2f}"]
 
         st.markdown(f"### {dimension}")
         st.dataframe(tabla_visualizacion)
