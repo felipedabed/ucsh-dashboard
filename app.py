@@ -125,19 +125,35 @@ resumen.loc[len(resumen)] = [
 ]
 st.dataframe(resumen)
 
-# Categoría global promedio (solo si se seleccionó 1 colaborador)
+# Categoría de Desempeño con estilo visual y emoji
 if len(informacion) == 1:
     st.subheader("Categoría de Desempeño Obtenida")
-    categoria_colaborador = informacion["Categoría desempeño"].values[0]
-    st.markdown(f"<h5 style='color:#000FF'>{categoria_colaborador}</h5>", unsafe_allow_html=True)
 
-# Tabla fija informativa (bien desde antes)
-st.subheader("Ponderación por Dimensión")
-info_ponderacion = pd.DataFrame({
-    "Dimensión": ["Autoevaluación", "Indirecto", "Jefatura"],
-    "% Ponderación": [f"{ponderaciones.get(r, np.nan):.0f}%" if not pd.isna(ponderaciones.get(r)) else "-" for r in ["Autoevaluacion", "Indirecto", "Jefatura"]]
-})
-st.dataframe(info_ponderacion)
+    categoria_colaborador = informacion["Categoría desempeño"].values[0]
+
+    # Colores y emojis según categoría
+    color = {
+        "Desempeño destacado": "#27ae60",   # verde
+        "Desempeño competente": "#2980b9",  # azul
+        "Desempeño básico": "#f39c12",      # naranjo
+        "Desempeño insuficiente": "#c0392b" # rojo
+    }.get(categoria_colaborador, "#7f8c8d")  # gris por defecto
+
+    emoji = {
+        "Desempeño destacado": "🟢",
+        "Desempeño competente": "🔵",
+        "Desempeño básico": "🟠",
+        "Desempeño insuficiente": "🔴"
+    }.get(categoria_colaborador, "⚪")
+
+    st.markdown(
+        f"""
+        <div style="padding:20px;border-radius:10px;background-color:{color};color:white;text-align:center;font-size:24px;">
+            <b>{emoji} {categoria_colaborador}</b>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 
 # UUUULTIMA SECCION
