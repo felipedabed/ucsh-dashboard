@@ -61,9 +61,9 @@ if filtered_df.empty:
     st.stop()
 
 
-
-
-
+# Pivot por Rol Evaluador
+pivot = filtered_df.pivot_table(index="RUT Colaborador", columns="Rol Evaluador", values="Nota Final Evaluación", aggfunc="mean")
+pivot = pivot.reindex(columns=["Autoevaluacion", "Indirecto", "Jefatura"])
 
 
 
@@ -74,13 +74,6 @@ rut_colaborador = informacion["RUT Colaborador"].values[0] if len(informacion) =
 ##DATA EXTRA
 
 
-
-
-
-
-# Pivot por Rol Evaluador
-pivot = filtered_df.pivot_table(index="RUT Colaborador", columns="Rol Evaluador", values="Nota Final Evaluación", aggfunc="mean")
-pivot = pivot.reindex(columns=["Autoevaluacion", "Indirecto", "Jefatura"])
 
 # Ponderaciones globales por rol
 ponderaciones = filtered_df.groupby("Rol Evaluador")["Ponderación Rol Evaluación"].mean()
