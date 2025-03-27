@@ -118,21 +118,31 @@ st.subheader("Puntaje por Dimensión (Escala 1-4)")
 dimensiones_promedio = pivot.mean(skipna=True)
 st.bar_chart(dimensiones_promedio)
 
-# Tabla resumen promedios correctos
+# Tabla resumen con pesos reales por dimensión
 st.subheader("Resumen de Notas por Dimensión")
+
+# Obtener pesos reales en base al dataframe filtrado
+ponderaciones_reales = filtered_df.groupby("Rol Evaluador")["Ponderación Rol Evaluación"].mean()
+ponderaciones_reales = ponderaciones_reales.reindex(["Autoevaluacion", "Indirecto", "Jefatura"])
+
+# Normalizar para que sumen 100%
+ponderaciones_normalizadas = (ponderaciones_reales / ponderaciones_reales.sum()) * 100
+
 resumen = pd.DataFrame({
     "Dimensión": dimensiones_promedio.index,
     "Nota Promedio": dimensiones_promedio.values.round(3),
-    "Nota Promedio %": [f"{((x-1)/3)*100:.0f}%" for x in dimensiones_promedio.values]
+    "Peso % Dimensión": ponderaciones_normalizadas.values.round(1).astype(str) + "%"
 })
 
-# Total ponderado promedio correcto
+# Agregar fila con promedio global
 resumen.loc[len(resumen)] = [
     "Total ponderado promedio",
     informacion["Score Global"].mean().round(3),
-    f"{((informacion['Score Global'].mean()-1)/3)*100:.0f}%"
+    "100%"
 ]
+
 st.dataframe(resumen)
+
 
 if len(informacion) == 1:
     st.subheader("Resumen por Dimensión")
