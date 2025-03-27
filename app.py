@@ -163,6 +163,7 @@ if len(informacion) == 1:
     st.subheader("Categoría de Desempeño Obtenida")
 
     categoria_colaborador = informacion["Categoría desempeño"].values[0]
+    puntaje_colaborador = informacion["Score Global"].values[0]
 
     # Colores y emojis según categoría
     color = {
@@ -182,7 +183,8 @@ if len(informacion) == 1:
     st.markdown(
         f"""
         <div style="padding:20px;border-radius:10px;background-color:{color};color:white;text-align:center;font-size:24px;">
-            <b>{emoji} {categoria_colaborador}</b>
+            <b>{emoji} {categoria_colaborador}</b><br>
+            <span style="font-size:18px;">Puntaje obtenido: <b>{puntaje_colaborador:.2f}</b></span>
         </div>
         """,
         unsafe_allow_html=True
