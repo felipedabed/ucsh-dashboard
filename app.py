@@ -142,10 +142,6 @@ resumen.loc[len(resumen)] = [
 ]
 
 st.dataframe(resumen)
-st.markdown(
-    "_Los % teóricos de cada dimensión son **Autoevaluación (20%)**, **Indirecto (35%)** y **Jefatura (45%)**. "
-    "En caso de que veas algo distinto se debe a que hay respuestas incompletas en una o más dimensiones._"
-)
 
 
 
