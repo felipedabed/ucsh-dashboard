@@ -274,3 +274,27 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
+
+##### IMPRIMIR 
+
+st.markdown("""
+    <script>
+        function printPage() {
+            window.print();
+        }
+    </script>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="printPage()" style="
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;">
+            🖨️ Imprimir Evaluación / Guardar como PDF
+        </button>
+    </div>
+""", unsafe_allow_html=True)
+
