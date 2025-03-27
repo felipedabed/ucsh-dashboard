@@ -2,5 +2,5 @@ streamlit
 pandas
 numpy
 plotly==5.20.0
-pdfkit
-jinja2
+from io import BytesIO
+from fpdf import FPDF
