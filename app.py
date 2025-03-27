@@ -67,13 +67,6 @@ pivot = pivot.reindex(columns=["Autoevaluacion", "Indirecto", "Jefatura"])
 
 
 
-###DATA EXTRA
-
-# Obtener RUT único si hay un colaborador seleccionado
-rut_colaborador = informacion["RUT Colaborador"].values[0] if len(informacion) == 1 else "Evaluacion_UCSH"
-##DATA EXTRA
-
-
 
 # Ponderaciones globales por rol
 ponderaciones = filtered_df.groupby("Rol Evaluador")["Ponderación Rol Evaluación"].mean()
