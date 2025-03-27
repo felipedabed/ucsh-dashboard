@@ -255,3 +255,36 @@ for dimension, columnas_nota in atributos_por_dimension.items():
     else:
         st.markdown(f"### {dimension}")
         st.info("No se encontraron atributos evaluados para esta dimensión.")
+
+
+
+
+def generar_pdf(colaborador):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, txt="Evaluación de Desempeño", ln=True, align="C")
+    pdf.ln(10)
+
+    for key, value in colaborador.items():
+        pdf.cell(200, 10, txt=f"{key}: {value}", ln=True)
+
+    buffer = BytesIO()
+    pdf.output(buffer)
+    buffer.seek(0)
+    return buffer
+
+# Botón para descarga individual
+st.subheader("Descargar PDF del Colaborador")
+if len(informacion) == 1:
+    colaborador_dict = informacion.iloc[0].to_dict()
+    pdf_file = generar_pdf(colaborador_dict)
+    st.download_button(
+        label="📄 Descargar PDF",
+        data=pdf_file,
+        file_name=f"{colaborador_dict['RUT Colaborador']}.pdf",
+        mime="application/pdf"
+    )
+else:
+    st.info("Filtra por un solo colaborador para habilitar la descarga.")
