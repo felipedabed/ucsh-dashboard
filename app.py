@@ -170,11 +170,10 @@ if len(informacion) == 1:
         """,
         unsafe_allow_html=True
     )
-
+dimensiones_promedio = pivot.mean(skipna=True)
 
 # Puntaje promedio por dimensión
 st.subheader("Puntaje por Dimensión (Escala 1-4)")
-dimensiones_promedio = pivot.mean(skipna=True)
 st.bar_chart(dimensiones_promedio)
 
 # Tabla resumen promedios correctos
