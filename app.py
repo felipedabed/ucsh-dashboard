@@ -125,6 +125,12 @@ resumen.loc[len(resumen)] = [
 ]
 st.dataframe(resumen)
 
+# Categoría global promedio (solo si se seleccionó 1 colaborador)
+if len(informacion) == 1:
+    st.subheader("Categoría de Desempeño Obtenida")
+    categoria_colaborador = informacion["Categoría desempeño"].values[0]
+    st.markdown(f"<h3 style='color:#2c3e50'>{categoria_colaborador}</h3>", unsafe_allow_html=True)
+
 # Tabla fija informativa (bien desde antes)
 st.subheader("Ponderación por Dimensión")
 info_ponderacion = pd.DataFrame({
