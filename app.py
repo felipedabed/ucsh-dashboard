@@ -129,7 +129,7 @@ st.dataframe(resumen)
 if len(informacion) == 1:
     st.subheader("Categoría de Desempeño Obtenida")
     categoria_colaborador = informacion["Categoría desempeño"].values[0]
-    st.markdown(f"<h4 style='color:#2c3e50'>{categoria_colaborador}</h4>", unsafe_allow_html=True)
+    st.markdown(f"<h5 style='color:#000FF'>{categoria_colaborador}</h5>", unsafe_allow_html=True)
 
 # Tabla fija informativa (bien desde antes)
 st.subheader("Ponderación por Dimensión")
