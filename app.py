@@ -144,6 +144,7 @@ resumen.loc[len(resumen)] = [
 st.dataframe(resumen)
 
 
+
 if len(informacion) == 1:
     st.subheader("Resumen por Dimensión")
 
