@@ -36,6 +36,7 @@ with st.sidebar:
     gerencia_filter = st.selectbox("Gerencia", options=["Todos"] + sorted(df["Gerencia"].dropna().unique().tolist()))
     centro_filter = st.selectbox("Centro de Costo", options=["Todos"] + sorted(df["Centro de Costo"].dropna().unique().tolist()))
     sucursal_filter = st.selectbox("Sucursal", options=["Todos"] + sorted(df["Sucursal"].dropna().unique().tolist()))
+    estado_eval_filter = st.selectbox("Evaluación", options=["Todos", "Completa", "Incompleta"])
     familia_cargo_filter = st.selectbox("Familia del Cargo", options=["Todos"] + sorted(df["Familia del Cargo"].dropna().unique().tolist()))
 
 
@@ -51,6 +52,8 @@ if centro_filter != "Todos":
     filtered_df = filtered_df[filtered_df["Centro de Costo"] == centro_filter]
 if sucursal_filter != "Todos":
     filtered_df = filtered_df[filtered_df["Sucursal"] == sucursal_filter]
+if estado_eval_filter != "Todos":
+    informacion = informacion[informacion["Evaluación"] == estado_eval_filter]
 if familia_cargo_filter != "Todos":
     filtered_df = filtered_df[filtered_df["Familia del Cargo"] == familia_cargo_filter]
 
@@ -119,8 +122,17 @@ def evaluar_completitud(row):
     return "Completa" if all(not pd.isna(n) for n in notas) else "Incompleta"
 
 informacion["Evaluación"] = informacion.apply(evaluar_completitud, axis=1)
-st.dataframe(informacion)
-# Puntaje promedio por dimensión
+def color_categoria(val):
+    color_map = {
+        "Desempeño destacado": "background-color: #27ae60; color: white",
+        "Desempeño competente": "background-color: #2980b9; color: white",
+        "Desempeño básico": "background-color: #f39c12; color: black",
+        "Desempeño insuficiente": "background-color: #c0392b; color: white"
+    }
+    return color_map.get(val, "")
+
+styled_info = informacion.style.applymap(color_categoria, subset=["Categoría desempeño"])
+st.dataframe(styled_info, use_container_width=True)# Puntaje promedio por dimensión
 st.subheader("Puntaje por Dimensión (Escala 1-4)")
 dimensiones_promedio = pivot.mean(skipna=True)
 st.bar_chart(dimensiones_promedio)
