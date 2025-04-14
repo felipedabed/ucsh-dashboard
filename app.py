@@ -24,6 +24,8 @@ def load_data():
 
 df = load_data()
 
+st.write("Columnas del archivo:", df.columns.tolist())
+
 st.title("Panel de Evaluación UCSH")
 
 # Filtros
