@@ -26,8 +26,6 @@ df = load_data()
 
 st.write("Columnas del archivo:", df.columns.tolist())
 
-st.title("Panel de Evaluación UCSH")
-
 # Filtros
 with st.sidebar:
     st.header("Filtros")
