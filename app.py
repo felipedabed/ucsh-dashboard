@@ -7,22 +7,14 @@ import numpy as np
 @st.cache_data
 def load_data():
     df = pd.read_csv("data/Resultados_ROL.csv", delimiter=",", encoding="utf-8")
-    
-    # Limpiar nombres de columnas
     df.columns = df.columns.str.strip().str.replace("\u00a0", " ").str.replace("\ufeff", "")
-
-    # Validar columna clave
-    if "Nota Final Evaluación" not in df.columns:
-        st.error("❌ No se encontró la columna 'Nota Final Evaluación' en el archivo. Verifica el nombre exacto en el CSV.")
-        st.stop()
-
-    # Limpiar datos
     df["Nota Final Evaluación"] = pd.to_numeric(df["Nota Final Evaluación"].replace("-", np.nan), errors='coerce')
     df["Ponderación Rol Evaluación"] = pd.to_numeric(df["Ponderación Rol Evaluación"].replace("-", np.nan), errors='coerce')
     return df
 
-
 df = load_data()
+
+st.title("Panel de Evaluación UCSH")
 
 # Filtros
 with st.sidebar:
