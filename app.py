@@ -1,6 +1,3 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
 
 
 # El resto de tu código sigue exactamente igual desde aquí
