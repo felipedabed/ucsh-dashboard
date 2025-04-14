@@ -24,8 +24,6 @@ def load_data():
 
 df = load_data()
 
-st.write("Columnas del archivo:", df.columns.tolist())
-
 # Filtros
 with st.sidebar:
     st.header("Filtros")
