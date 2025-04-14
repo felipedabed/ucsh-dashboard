@@ -52,8 +52,6 @@ if centro_filter != "Todos":
     filtered_df = filtered_df[filtered_df["Centro de Costo"] == centro_filter]
 if sucursal_filter != "Todos":
     filtered_df = filtered_df[filtered_df["Sucursal"] == sucursal_filter]
-if estado_eval_filter != "Todos":
-    informacion = informacion[informacion["Evaluación"] == estado_eval_filter]
 if familia_cargo_filter != "Todos":
     filtered_df = filtered_df[filtered_df["Familia del Cargo"] == familia_cargo_filter]
 
@@ -122,6 +120,11 @@ def evaluar_completitud(row):
     return "Completa" if all(not pd.isna(n) for n in notas) else "Incompleta"
 
 informacion["Evaluación"] = informacion.apply(evaluar_completitud, axis=1)
+
+if estado_eval_filter != "Todos":
+    informacion = informacion[informacion["Evaluación"] == estado_eval_filter]
+
+
 def color_categoria(val):
     color_map = {
         "Desempeño destacado": "background-color: #27ae60; color: white",
