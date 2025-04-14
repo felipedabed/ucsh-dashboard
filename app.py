@@ -26,7 +26,7 @@ def load_data():
 # Cargar el DataFrame
 df = load_data()
 
-st.title("Panel de Evaluación UCSH")
+st.title("Panel de Evaluación UCSH 2.0")
 
 # Filtros
 with st.sidebar:
