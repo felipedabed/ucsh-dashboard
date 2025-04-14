@@ -112,6 +112,13 @@ def categoria_desempeno(score):
         return "Desempeño insuficiente"
 
 informacion["Categoría desempeño"] = informacion["Score Global"].apply(categoria_desempeno)
+
+# NUEVO: Agrega columna de Evaluación completa/incompleta
+def evaluar_completitud(row):
+    notas = [row["Nota Autoevaluación"], row["Nota Indirecto"], row["Nota Jefatura"]]
+    return "Completa" if all(not pd.isna(n) for n in notas) else "Incompleta"
+
+informacion["Evaluación"] = informacion.apply(evaluar_completitud, axis=1)
 st.dataframe(informacion)
 # Puntaje promedio por dimensión
 st.subheader("Puntaje por Dimensión (Escala 1-4)")
