@@ -36,6 +36,7 @@ with st.sidebar:
     gerencia_filter = st.selectbox("Gerencia", options=["Todos"] + sorted(df["Gerencia"].dropna().unique().tolist()))
     centro_filter = st.selectbox("Centro de Costo", options=["Todos"] + sorted(df["Centro de Costo"].dropna().unique().tolist()))
     sucursal_filter = st.selectbox("Sucursal", options=["Todos"] + sorted(df["Sucursal"].dropna().unique().tolist()))
+    estado_eval_filter = st.selectbox("Evaluación", options=["Todos", "Completa", "Incompleta"])
     familia_cargo_filter = st.selectbox("Familia del Cargo", options=["Todos"] + sorted(df["Familia del Cargo"].dropna().unique().tolist()))
 
 
@@ -112,8 +113,29 @@ def categoria_desempeno(score):
         return "Desempeño insuficiente"
 
 informacion["Categoría desempeño"] = informacion["Score Global"].apply(categoria_desempeno)
-st.dataframe(informacion)
-# Puntaje promedio por dimensión
+
+# NUEVO: Agrega columna de Evaluación completa/incompleta
+def evaluar_completitud(row):
+    notas = [row["Nota Autoevaluación"], row["Nota Indirecto"], row["Nota Jefatura"]]
+    return "Completa" if all(not pd.isna(n) for n in notas) else "Incompleta"
+
+informacion["Evaluación"] = informacion.apply(evaluar_completitud, axis=1)
+
+if estado_eval_filter != "Todos":
+    informacion = informacion[informacion["Evaluación"] == estado_eval_filter]
+
+
+def color_categoria(val):
+    color_map = {
+        "Desempeño destacado": "background-color: #27ae60; color: white",
+        "Desempeño competente": "background-color: #2980b9; color: white",
+        "Desempeño básico": "background-color: #f39c12; color: black",
+        "Desempeño insuficiente": "background-color: #c0392b; color: white"
+    }
+    return color_map.get(val, "")
+
+styled_info = informacion.style.applymap(color_categoria, subset=["Categoría desempeño"])
+st.dataframe(styled_info, use_container_width=True)# Puntaje promedio por dimensión
 st.subheader("Puntaje por Dimensión (Escala 1-4)")
 dimensiones_promedio = pivot.mean(skipna=True)
 st.bar_chart(dimensiones_promedio)
