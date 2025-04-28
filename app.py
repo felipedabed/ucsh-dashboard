@@ -3,9 +3,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-# El resto de tu código sigue exactamente igual desde aquí
-
-# Cargar datos
 @st.cache_data
 def load_data():
     df = pd.read_csv("data/Resultados_ROL.csv", delimiter=",", encoding="utf-8")
@@ -23,12 +20,11 @@ def load_data():
 
     return df
 
-# Cargar el DataFrame
+# DataFrame
 df = load_data()
 
 st.title("Panel de Evaluación UCSH 2.0")
 
-# Filtros
 with st.sidebar:
     st.header("Filtros")
     rut_filter = st.selectbox("RUT Colaborador", options=["Todos"] + sorted(df["RUT Colaborador"].dropna().unique().tolist()))
@@ -40,7 +36,6 @@ with st.sidebar:
     familia_cargo_filter = st.selectbox("Familia del Cargo", options=["Todos"] + sorted(df["Familia del Cargo"].dropna().unique().tolist()))
 
 
-# Aplicar filtros
 filtered_df = df.copy()
 if rut_filter != "Todos":
     filtered_df = filtered_df[filtered_df["RUT Colaborador"] == rut_filter]
@@ -69,10 +64,10 @@ pivot = pivot.reindex(columns=["Autoevaluacion", "Indirecto", "Jefatura"])
 
 
 
-# Ponderaciones globales por rol
+# Ponderaciones globales x rol
 ponderaciones = filtered_df.groupby("Rol Evaluador")["Ponderación Rol Evaluación"].mean()
 
-# Función correcta para calcular score individual
+# Función  para calcular score individual
 def calcular_score(row):
     score, suma_ponderaciones = 0, 0
     for rol in ["Autoevaluacion", "Indirecto", "Jefatura"]:
