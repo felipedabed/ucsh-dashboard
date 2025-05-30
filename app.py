@@ -1,4 +1,30 @@
 
+# ==== CONTROL DE ACCESO ====
+import streamlit as st
+import hashlib
+
+# Clave secreta (puedes cambiarla por algo más seguro)
+PASSWORD = "ucsh2025"
+
+def check_password():
+    def password_entered():
+        if hashlib.sha256(st.session_state["password"].encode()).hexdigest() == hashlib.sha256(PASSWORD.encode()).hexdigest():
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # Elimina la clave ingresada
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        st.text_input("🔒 Ingrese la clave de acceso:", type="password", on_change=password_entered, key="password")
+        st.stop()
+    elif not st.session_state["password_correct"]:
+        st.error("❌ Clave incorrecta")
+        st.text_input("🔒 Ingrese la clave de acceso:", type="password", on_change=password_entered, key="password")
+        st.stop()
+
+check_password()
+# ============================
+
 import streamlit as st
 import pandas as pd
 import numpy as np
